@@ -1,0 +1,119 @@
+# Cursor Rules for Sprint Story Generation
+
+When creating sprint stories from technical proposal documents, follow this structure to create actionable, well-organized stories that reference the detailed proposal.
+
+## Document Structure
+
+1. **Title**
+   - Format: `Sprint Story: [Feature/System Name]`
+   - Should match or be derived from the proposal document title
+
+2. **Story Summary** (User Story Format)
+   - **As a** [user role/persona]
+   - **I want** [capability/feature]
+   - **So that** [benefit/value]
+   - Include a prominent reference to the proposal document with link
+
+3. **Problem Statement**
+   - Concise version of the problem from the proposal
+   - Focus on operational/user impact
+   - 3-5 bullet points maximum
+   - Can reference additional details in the proposal
+
+4. **Solution Overview**
+   - High-level summary of the solution approach
+   - Numbered list of key solution components
+   - Keep it brief (4-6 points)
+
+5. **Technical Approach**
+   - Bullet list of key technical mechanisms
+   - Use bold for important concepts
+   - Reference specific technologies/patterns
+
+6. **Acceptance Criteria**
+   - **Functional Requirements**: What the system must do
+   - **Non-Functional Requirements**: Performance, reliability, maintainability
+   - Use checkboxes for tracking
+   - Be specific and testable
+
+7. **Implementation Phases**
+   - **DO NOT duplicate detailed checklists** - reference the proposal document instead
+   - For each phase, include:
+     - **Phase Name**: Descriptive name
+     - **Brief Summary**: 1-2 sentences describing what the phase accomplishes
+   - Add a note at the top referencing the detailed checklists in the proposal
+   - Keep phase descriptions high-level and scannable
+
+8. **Dependencies**
+   - **External**: External libraries, services, or infrastructure
+   - **Internal**: Existing code/components that must be available
+   - List specific interfaces, services, or patterns
+
+9. **Risks and Mitigations**
+   - Use a table format:
+     | Risk | Impact | Mitigation |
+     |------|--------|------------|
+     | Risk description | High/Medium/Low | Mitigation strategy |
+   - Focus on implementation risks, not design risks (design risks should be in proposal)
+
+10. **Definition of Done**
+    - Checklist of completion criteria
+    - Include: code review, testing, deployment, documentation
+    - Reference separate stories if applicable (e.g., documentation story)
+
+11. **Performance Baseline** (if applicable)
+    - **Before Implementation**: What to measure
+    - **After Implementation**: What to compare
+    - Reference proposal for detailed baseline methodology
+
+12. **Configuration** (if applicable)
+    - Configuration properties needed
+    - Environment-specific values
+    - Code examples of configuration
+
+13. **References**
+    - **Proposal Document**: Link to the technical proposal
+    - **Codebase Guide**: Link to exploration guide if available
+    - **Current Implementation**: Key files that will be modified
+    - **Similar Patterns**: Existing code patterns to follow
+
+14. **Notes**
+    - Important implementation considerations
+    - Architectural decisions to keep in mind
+    - Non-obvious constraints or requirements
+
+## Key Principles
+
+- **Reference, Don't Duplicate**: Sprint stories should reference detailed checklists in the proposal, not repeat them
+- **Actionable**: Each phase should be clear about what needs to be done
+- **Scannable**: Use bullet points, tables, and clear headings
+- **Complete**: Include all information needed to start work without reading the proposal
+- **Concise**: Keep descriptions brief - details are in the proposal
+
+## Splitting Stories
+
+When a proposal is large or has distinct phases that can be worked independently:
+- **Main Implementation Story**: Core functionality
+- **Documentation Story**: Documentation and monitoring (can be done in parallel or after)
+- **Testing Story**: Comprehensive testing (if separate from implementation)
+
+Each story should:
+- Be independently valuable
+- Have clear acceptance criteria
+- Reference the same proposal document
+- Note dependencies on other stories
+
+## Example Request Format
+
+When asking for a sprint story, you can say:
+- "Create a sprint story for [feature] based on [proposal document]"
+- "Generate a sprint story from [proposal document], split into implementation and documentation stories"
+- "Create a sprint story for Phase X of [proposal document]"
+
+## Story Naming Convention
+
+- Main story: `[FEATURE]_SPRINT_STORY.md`
+- Documentation story: `[FEATURE]_DOCUMENTATION_STORY.md`
+- Testing story: `[FEATURE]_TESTING_STORY.md`
+- Use uppercase with underscores for consistency
+

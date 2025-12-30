@@ -1,0 +1,181 @@
+# Cursor Rules for Technical Proposals
+
+## Document Writing Guidelines
+
+When writing technical proposal documents, architecture documents, or design specifications, follow these guidelines:
+
+### Document Structure
+
+1. **Problem Statement**
+   - Clearly describe the current problem or limitation
+   - Include current implementation details with code references
+   - Explain the impact (operational, user experience, technical debt)
+   - Note any architectural context (multi-instance, distributed systems, etc.)
+   - Use subsections for:
+     - **Current Implementation**: Show code examples of how it works now
+     - **Impact**: Bullet list of operational/user experience/technical impacts
+     - **Architecture Context**: Explicitly call out multi-instance, distributed, or other architectural considerations
+     - **Data Flow**: Explain how data currently flows through the system
+   - For complex problems, use **"The Complete Problem"** section that breaks down the issue step-by-step showing the full impact
+
+2. **Solution Options**
+   - Present multiple viable options when applicable
+   - For each option, include:
+     - Overview/description
+     - Implementation details with code examples
+     - Pros (✅) and Cons (❌) in clear lists
+     - Use cases or scenarios where it's appropriate
+   - Include a "Recommended" section if one option is preferred
+   - **Explicitly reject alternatives** with "Why Not X" subsections:
+     - Explain why each rejected alternative doesn't work
+     - Reference architectural constraints (multi-instance, etc.)
+     - Help reviewers understand the decision space
+
+3. **Implementation Details**
+   - Provide concrete code examples
+   - Include file paths and class names
+   - Show before/after code when relevant
+   - Include configuration examples
+   - Reference existing patterns in the codebase
+   - Organize by phases when implementation is complex
+   - For each phase, include:
+     - Overview of what the phase accomplishes
+     - Detailed code examples
+     - Files to create/modify
+     - Testing considerations
+
+4. **Testing Considerations**
+   - Unit test examples
+   - Integration test scenarios
+   - Edge cases to consider
+   - Multi-instance or distributed system testing when applicable
+
+5. **Migration Path**
+   - Phased approach if applicable
+   - Rollout strategy
+   - Risk mitigation
+
+6. **Performance Baseline** (when performance is a concern)
+   - **Why Baseline Before Changes**: Explain why establishing a baseline is critical
+   - **Baseline Metrics to Collect**: List specific metrics (latency, throughput, memory, etc.)
+   - **Measurement Approach**: Show how to instrument code for measurement
+   - **Load Testing**: Describe load testing approach
+   - **Expected Impact Analysis**: Compare current vs. new performance characteristics
+   - **Baseline Collection Checklist**: Tasks to establish baseline
+   - **Post-Implementation Comparison**: How to validate performance after changes
+
+7. **Sequence Diagrams and Flow Explanations**
+   - Use Mermaid sequence diagrams for complex flows
+   - Include detailed **Flow Explanation** section after diagrams
+   - Add **Key Points** summary bullets highlighting important aspects
+   - Show different scenarios (alt blocks) when flow varies
+   - Include participants for all major components
+
+8. **Decision Summary**
+   - Clear recommendation with bold emphasis
+   - **Rationale**: Bullet list of reasons for the choice
+   - **Implementation Phases**: High-level phase breakdown
+   - **Not Recommended**: List alternatives and why they were rejected
+
+9. **Questions for Review**
+   - List open questions that need team input
+   - Include recommendations for each question
+   - Helps identify areas needing discussion before implementation
+
+10. **References**
+    - Links to relevant code files
+    - Similar patterns in the codebase
+    - Related documentation
+
+### Code Examples
+
+- Use proper code blocks with language identifiers
+- Include file paths in comments when showing code from specific files
+- Show complete, compilable examples when possible
+- Include error handling patterns
+- Show both interface and implementation when relevant
+
+### Formatting
+
+- Use markdown headers for clear hierarchy
+- Use emoji checkmarks (✅) for pros and X marks (❌) for cons
+- Use code blocks for all code examples
+- Use bullet points for lists
+- Use tables for comparisons when helpful
+- Bold important concepts or decisions
+
+### Tone and Style
+
+- Write for engineers who need to understand and implement
+- Be clear and direct
+- **Be concise. Sacrifice grammar for conciseness.**
+- Acknowledge trade-offs honestly
+- Provide actionable recommendations
+- Include "Questions for Review" section when decisions need team input
+
+### Multi-Instance/Distributed Considerations
+
+When dealing with multi-instance or distributed systems:
+- Explicitly call out the architecture context
+- Explain how each option handles multiple instances
+- Discuss coordination mechanisms if needed
+- Consider eventual consistency vs immediate consistency
+- Evaluate infrastructure dependencies
+
+### When to Include Alternatives
+
+- Always include alternatives that were seriously considered
+- Explain why they were not chosen
+- This helps reviewers understand the decision space
+- Prevents revisiting already-considered options
+
+### Checklist Sections
+
+Include implementation checklists with checkboxes:
+- [ ] Task 1
+- [ ] Task 2
+- etc.
+
+This helps track progress and ensures nothing is missed.
+
+**Organize checklists by phase** when implementation is complex:
+- Phase 1: [Phase Name]
+  - [ ] Task 1
+  - [ ] Task 2
+- Phase 2: [Phase Name]
+  - [ ] Task 1
+  - [ ] Task 2
+
+Include **Files to Modify** and **Files to Create** subsections within each phase.
+
+### Code References
+
+Always include:
+- Full file paths relative to repo root
+- Class/method names
+- Line numbers when referencing specific code
+- Similar patterns in the codebase for consistency
+
+### Configuration Examples
+
+When configuration is involved:
+- Show default values
+- Explain environment-specific considerations
+- Provide examples for different environments (dev, staging, prod)
+
+### Monitoring and Observability
+
+When applicable, include:
+- **Recommended Metrics**: List specific metrics with names, types, and descriptions
+- **Logging**: Detailed logging requirements with example log messages
+- **Alerting**: Alert thresholds and conditions
+- **Dashboards**: What dashboards should be created
+- **How to verify**: Steps to verify the solution is working
+
+### Key Points Summaries
+
+After complex explanations (diagrams, flows, algorithms), include a **Key Points** section with bulleted summaries:
+- Highlight the most important takeaways
+- Make it easy to scan and understand quickly
+- Use bold for critical concepts
+

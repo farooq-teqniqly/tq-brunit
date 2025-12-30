@@ -1,0 +1,607 @@
+# TDD Implementation Rules
+
+
+When implementing features based on design documents, follow these TDD (Test-Driven Development) principles:
+
+## 0.1 Guardrails (Cursor)
+- Make the smallest change that makes the next test pass.
+- Do not refactor unrelated code “while you’re here.”
+- Do not rename/move files unless required by the design doc.
+- Do not add new libraries unless required or already standard in the repo.
+- Keep diffs small and incremental; one behavior per cycle.
+
+## 0.2 Tooling / House Style
+- Testing framework: xUnit
+- Mocking: NSubstitute
+- Do not introduce NUnit, Moq, or new test libraries unless explicitly required.
+- Use xUnit assertions (`Assert.Equal(...)`, `Assert.True(...)`, etc.) and xUnit attributes (`[Fact]`, `[Theory]`, `[InlineData]`).
+
+### xUnit Test Template
+public class SomeServiceTests
+{
+    private IDependency _dep = null!;
+    private IDependency _dep = null!;
+    private SomeService _sut = null!;
+
+    public SomeServiceTests()
+    {
+        _dep = Substitute.For<IDependency>();
+        _sut = new SomeService(_dep);
+        _dep = Substitute.For<IDependency>();
+        _sut = new SomeService(_dep);
+    }
+
+    [Fact]
+    public void DoThing_WhenX_ThenY()
+    {
+        // Arrange
+        _dep.Get(Arg.Any<int>()).Returns("abc");
+        _dep.Get(Arg.Any<int>()).Returns("abc");
+
+        // Act
+        var result = _sut.DoThing(123);
+
+        // Assert
+        Assert.Equal("expected", result);
+        _dep.Received(1).Get(123);
+    }
+}
+
+
+### 0.3 Mocking (NSubstitute)
+### 0.3 Mocking (NSubstitute)
+- Prefer mocking only external dependencies (I/O, time, network, DB, random, file system).
+- Do not mock pure domain objects/value objects.
+- Verify interactions only when behavior requires it; avoid `ReceivedCalls()` as a default.
+- Use `Substitute.For<T>()` to create mocks.
+- For async methods: use `Returns(...)` with `Task.FromResult(...)` for fixed values, or `Returns(_ => Task.FromResult(...))` for per-call values.
+  - Fixed value: `_dep.GetAsync(Arg.Any<int>()).Returns(Task.FromResult("result"));`
+  - Per-call: `_dep.GetAsync(Arg.Any<int>()).Returns(x => Task.FromResult($"result-{x.Arg<int>()}"));`
+  - Async lambda: `_dep.ProcessAsync(Arg.Any<string>()).Returns(async x => { await Task.Delay(1); return "processed"; });`
+- Verify interactions only when behavior requires it; avoid `ReceivedCalls()` as a default.
+- Use `Substitute.For<T>()` to create mocks.
+- For async methods: use `Returns(...)` with `Task.FromResult(...)` for fixed values, or `Returns(_ => Task.FromResult(...))` for per-call values.
+  - Fixed value: `_dep.GetAsync(Arg.Any<int>()).Returns(Task.FromResult("result"));`
+  - Per-call: `_dep.GetAsync(Arg.Any<int>()).Returns(x => Task.FromResult($"result-{x.Arg<int>()}"));`
+  - Async lambda: `_dep.ProcessAsync(Arg.Any<string>()).Returns(async x => { await Task.Delay(1); return "processed"; });`
+
+### 0.4 Git / Commit Control (Important)
+- DO NOT commit, push, or create PRs automatically.
+- DO NOT run `git commit`, `git push`, `gh pr create`, or equivalent unless I explicitly ask.
+- After each RED/GREEN/REFACTOR cycle, stop and present:
+  - What changed (high-level summary)
+  - Files touched
+  - Key diff snippets (or describe where to look)
+  - Test command run + results
+- Wait for my review. I will decide whether to commit or request changes.
+- Do not stage changes (`git add`) unless I explicitly ask.
+
+
+## 1. Document Review Phase
+
+**CRITICAL: Always reference design and implementation documents throughout the entire TDD process.**
+
+Before writing any code:
+1. **Read the design document** (e.g., `*_PROPOSAL*.md`, `*_DESIGN*.md`) to understand:
+   - Problem statement and requirements
+   - Solution approach and architecture
+   - Implementation details and code examples
+   - Testing considerations
+   - Migration paths (if applicable)
+   - **Reference this document frequently during implementation to ensure alignment**
+
+2. **Read the current implementation document** (e.g., `*_UNDERSTANDING_CURRENT_IMPLEMENTATION*.md`) to understand:
+   - Current code structure and patterns
+   - Key files and their responsibilities
+   - Relationships between components
+   - Existing test patterns
+   - **Use this as a guide for understanding existing code before making changes**
+
+3. **Read story documents** (if available, e.g., `*_STORY*.md`, `*_ACCEPTANCE*.md`) to understand:
+   - User stories and acceptance criteria
+   - Business requirements
+   - Success criteria
+   - **If no story document exists, acknowledge this and proceed with design document as primary reference**
+
+## 2. TDD Workflow - Collaborative Step-by-Step Approach
+
+**IMPORTANT: Work incrementally and keep the developer in the loop at each step.**
+
+Follow the **Red-Green-Refactor** cycle strictly, but **one test at a time**:
+
+### Collaborative TDD Practices
+
+1. **Work Incrementally:**
+   - Write ONE test at a time
+   - Make ONE test pass at a time
+   - Present changes after each cycle
+   - Wait for feedback before proceeding to the next test
+   - Do NOT implement multiple tests or features in one go
+
+2. **Document Reference:**
+   - Before each test, reference the relevant section of the design document
+   - Before each implementation, reference the current implementation document for patterns
+   - When stuck, re-read the documents rather than guessing
+   - Explicitly state which document section you're implementing
+
+3. **Verification After Each Step:**
+   - After making a test pass, verify it matches the design document requirements
+   - After code changes, verify against the design document implementation details
+   - When the developer commits, acknowledge the commit and verify it aligns with documents
+   - Before moving to the next test, confirm the current step is complete
+
+4. **Communication:**
+   - Explain what you're about to do before doing it
+   - Show what test you're writing and why
+   - Show what code changes you're making and reference the design document
+   - Ask "What's next?" or "Which test should we write next?" rather than assuming
+
+### Step 1: RED - Write Failing Test First
+- Write a **single, small test** that describes the next slice of behavior (one behavior per test).
+- **Reference the design document** to determine which test to write next
+- Prefer a test that **compiles and fails an assertion** (true RED).
+- Allowed exception: if the design requires a new public API shape, the first test may fail to compile briefly.
+  In that case: add the smallest stub to make the test compile, then make it fail for the correct reason.
+- Use xUnit style: `[Fact]` / `[Theory]` with `[InlineData]` and xUnit assertions
+  (e.g., `Assert.Equal(expected, actual)`, `Assert.True(condition)`).
+- Only introduce NSubstitute when the SUT touches an external dependency (I/O, time, network, DB, filesystem).
+- Do not refactor unrelated code to "make the test cleaner"; keep the change minimal for this cycle.
+- **Present the test to the developer before implementing code**
+
+### Step 2: GREEN - Make Test Pass
+- Write the **minimum code** necessary to make the test pass
+- Don't worry about code quality yet - just make it work
+- **Follow the implementation details from the design document explicitly**
+- **Reference the current implementation document for patterns**
+- **Show what files you're changing and why**
+- Make test pass, then **stop and present the changes**
+
+### Step 3: REFACTOR - Improve Code Quality
+- Improve code structure, readability, and maintainability
+- Remove duplication
+- Ensure code follows existing patterns in the codebase
+- Verify all tests still pass after refactoring
+- **Present refactoring changes before moving to next test**
+
+## 3. Test Writing Guidelines
+
+### Test Structure
+- Use Arrange-Act-Assert (AAA) pattern
+- Mock dependencies using NSubstitute (or existing mocking framework)
+- Test one behavior per test method
+- Test edge cases and error conditions
+
+### Test Coverage Priority
+1. **Core functionality** - Main happy path scenarios
+2. **Edge cases** - Null handling, empty collections, boundary conditions
+3. **Error conditions** - Invalid inputs, missing dependencies, exceptions
+4. **Integration points** - Verify correct interaction with dependencies
+
+### Test Naming Convention
+```
+MethodName_Scenario_ExpectedBehavior
+```
+Examples:
+- `GetTokenAsync_UsesExternalAuthenticatorId_NotAuthenticatorId`
+- `SetTokenAsync_ReturnsNull_WhenExternalIdPNotFound`
+- `ValidateTokenRequestAsync_Oidc_ReturnSuccess`
+
+## 4. Implementation Guidelines
+
+### Code Changes
+- Follow the implementation details from the design document
+- Maintain consistency with existing codebase patterns
+- Update all affected files as specified in the design document
+- Preserve backward compatibility when required (see migration paths)
+
+### Database Changes
+- If database migration is required, follow the migration script from design document
+- Database changes should be in separate migration scripts/files
+- Code changes should work with both old and new schema during transition (if applicable)
+
+### Code Review Checklist
+- [ ] Tests are written first (TDD)
+- [ ] All tests pass
+- [ ] Implementation matches design document
+- [ ] Code follows existing patterns
+- [ ] Edge cases are handled
+- [ ] Error handling is appropriate
+- [ ] Logging is added where needed
+- [ ] No breaking changes (unless explicitly required)
+
+## 5. Document-Specific Implementation
+
+### When Design Document Specifies Phases
+- Implement Phase 1 features first
+- Write tests for Phase 1
+- Make Phase 1 tests pass
+- Then proceed to Phase 2 (if applicable)
+
+### When Design Document Specifies Migration Path
+- Follow the migration path exactly
+- Write tests that verify migration behavior
+- Ensure backward compatibility during transition
+- Test rollback scenarios if specified
+
+### When Design Document Specifies Testing Considerations
+- Implement all specified unit tests
+- Implement all specified integration tests
+- Implement all specified edge case tests
+- Follow QA testing scenarios from design document
+
+## 6. Verification and Validation
+
+### After Each Implementation Step
+
+1. **Verify Against Design Document:**
+   - Check that the implementation matches the design document's code examples
+   - Verify that all specified files have been updated
+   - Confirm that the approach aligns with the solution described in the design document
+
+2. **Verify Against Current Implementation Document:**
+   - Ensure new code follows existing patterns
+   - Verify that relationships between components are maintained
+   - Check that test structure matches existing test patterns
+
+3. **Verify Commits:**
+   - When the developer commits changes, acknowledge the commit
+   - Verify that committed changes align with the design document
+   - Check that all files mentioned in the design document have been updated
+   - Confirm no files were changed that weren't specified in the design document
+
+4. **Verify Test Coverage:**
+   - Ensure all tests specified in the design document's "Testing Considerations" section are written
+   - Verify edge cases from the design document are covered
+   - Check that acceptance criteria from story documents (if available) are tested
+
+### Completion Verification
+
+Before declaring implementation complete:
+- [ ] All code changes match the design document implementation details
+- [ ] All tests from design document are written and passing
+- [ ] Code follows patterns from current implementation document
+- [ ] All commits align with design document requirements
+- [ ] No unexpected files were modified
+- [ ] Migration scripts (if applicable) match design document specifications
+
+## 7. File Organization
+
+### Test Files
+- Create test files in appropriate test project (e.g., `PS.Identity.UnitTests`)
+- Match the namespace structure of the code being tested
+- Group related tests in the same test class
+- Use descriptive test class names: `[ClassUnderTest]Tests`
+
+### Implementation Files
+- Follow existing project structure
+- Update files as specified in design document
+- Maintain existing code organization patterns
+
+## 8. Example TDD Flow - Collaborative Approach
+
+**Example from External Token Migration:**
+
+1. **Read Documents (First):**
+   - Design document: `EXTERNAL_TOKEN_MIGRATION_PROPOSAL_v3.md`
+   - Implementation guide: `EXTERNAL_TOKEN_MIGRATION_UNDERSTANDING_CURRENT_IMPLEMENTATION.md`
+   - **Explicitly state which sections are relevant for the current step**
+
+2. **Ask Developer: "What's the first test we should write?"**
+   - Reference design document testing considerations section
+   - Suggest based on design document, but let developer confirm
+
+3. **Write First Test (Present to Developer):**
+   ```csharp
+   [Fact]
+   public async Task GetTokenAsync_UsesExternalAuthenticatorId_NotAuthenticatorId()
+   {
+       // Reference: Design doc section "Testing Considerations > UpstreamRefreshTokenStore Tests"
+       // Arrange - Set up mocks and test data
+       // Act - Call the method
+       // Assert - Verify behavior matches design document
+   }
+   ```
+   - **Show the test and explain why this is the first test**
+   - **Reference the design document section**
+
+4. **Run Test (RED):**
+   - Test should fail because implementation doesn't exist or uses old approach
+   - **Show the failure and explain what needs to be fixed**
+
+5. **Ask Developer: "Should I proceed with making this test pass?"**
+   - Wait for confirmation before implementing
+
+6. **Implement Minimum Code (GREEN):**
+   - **Reference design document implementation details section**
+   - **Reference current implementation document for patterns**
+   - Update interface signatures (show which file)
+   - Update implementation to match design document (show which file)
+   - Make test pass
+   - **Stop and present: "Test is now passing. Here's what changed..."**
+
+7. **Verify Against Documents:**
+   - Check implementation matches design document code examples
+   - Verify patterns match current implementation document
+   - **Explicitly state alignment with documents**
+
+8. **Ask Developer: "What's the next test?"**
+   - Don't assume - ask for direction
+   - Reference design document for suggestions
+
+9. **Repeat Steps 3-8:**
+   - One test at a time
+   - Verify after each step
+   - Keep developer in the loop
+
+10. **After Developer Commits:**
+    - Acknowledge the commit
+    - Verify committed changes align with design document
+    - Check that all expected files were updated
+    - **Ask: "What should we work on next?"**
+
+## 9. Common Patterns
+
+### Testing Repositories
+- Mock database connections
+- Verify SQL queries match design document
+- Test parameter passing
+
+### Testing Services
+- Mock dependencies
+- Verify business logic matches design document
+- Test error handling
+
+### Testing Adapters/Adapters
+- Mock external dependencies
+- Verify integration points
+- Test transformation logic
+
+### Testing ASP.NET Core Controllers (Integration Tests)
+- Use `WebApplicationFactory<TEntryPoint>` for integration testing
+- Create a custom `WebApplicationFactory` that overrides `ConfigureWebHost` to replace services with mocks
+- Use `IClassFixture<CustomWebApplicationFactory>` for test class setup
+- Use `MultipartFormDataContent` for testing file upload endpoints
+- Always dispose `ByteArrayContent` and other `IDisposable` resources using `using` statements
+- Use `Uri` objects instead of strings for HTTP client calls (e.g., `new Uri("/api/endpoint", UriKind.Relative)`)
+- Use `JsonDocument` for flexible JSON response validation when DTOs are immutable records
+- Mock services using NSubstitute in `ConfigureServices` within `WithWebHostBuilder` for per-test customization
+- Test validation scenarios: empty files, invalid file types, missing required fields
+- Test error handling: service failures, parsing failures, unexpected exceptions
+- Test happy paths: valid requests, successful responses, correct data mapping
+
+#### ASP.NET Core Controller Test Template
+```csharp
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using Xunit;
+
+namespace Teqniqly.Envino.Api.Tests.Controllers;
+
+public class MyControllerTests : IClassFixture<CustomWebApplicationFactory>
+{
+    private readonly CustomWebApplicationFactory _factory;
+
+    public MyControllerTests(CustomWebApplicationFactory factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task PostEndpoint_WithValidInput_ReturnsOk()
+    {
+        // Arrange
+        var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                // Remove existing service registration
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(IService)
+                );
+                if (descriptor != null)
+                {
+                    services.Remove(descriptor);
+                }
+
+                // Configure mock service
+                var mockService = Substitute.For<IService>();
+                mockService
+                    .DoSomethingAsync(Arg.Any<Request>(), Arg.Any<CancellationToken>())
+                    .Returns(Result.Success(new Response()));
+
+                services.AddSingleton(mockService);
+            });
+        });
+
+        var client = factory.CreateClient();
+        using var content = new MultipartFormDataContent();
+
+        // Add file content (if testing file uploads)
+        var fileBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47 }; // Example: PNG header
+        using var fileContent = new ByteArrayContent(fileBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        content.Add(fileContent, "file", "test.png");
+
+        // Add form fields
+        using var fieldContent = new StringContent("value");
+        content.Add(fieldContent, "fieldName");
+
+        // Act
+        var response = await client.PostAsync(
+            new Uri("/api/endpoint", UriKind.Relative),
+            content
+        );
+
+        // Assert
+        response.EnsureSuccessStatusCode(); // Or Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // For flexible JSON validation (immutable records)
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(jsonResponse);
+        var root = doc.RootElement;
+        Assert.True(root.TryGetProperty("property", out var property));
+        Assert.Equal("expected", property.GetString());
+
+        // Or for DTOs with settable properties
+        var dto = await response.Content.ReadFromJsonAsync<MyDto>();
+        Assert.NotNull(dto);
+        Assert.Equal("expected", dto.Property);
+    }
+
+    [Fact]
+    public async Task PostEndpoint_WithInvalidInput_ReturnsBadRequest()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        using var content = new MultipartFormDataContent();
+
+        // Add invalid content (empty file, wrong type, etc.)
+        using var emptyFileContent = new ByteArrayContent(Array.Empty<byte>());
+        emptyFileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        content.Add(emptyFileContent, "file", "test.png");
+
+        // Act
+        var response = await client.PostAsync(
+            new Uri("/api/endpoint", UriKind.Relative),
+            content
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problemDetails);
+        Assert.Equal(StatusCodes.Status400BadRequest, problemDetails.Status);
+    }
+
+    [Theory]
+    [InlineData("image/jpeg", "test.jpg")]
+    [InlineData("image/png", "test.png")]
+    [InlineData("image/gif", "test.gif")]
+    public async Task PostEndpoint_WithValidFileFormats_ReturnsOk(string contentType, string fileName)
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        using var content = new MultipartFormDataContent();
+
+        var imageBytes = contentType switch
+        {
+            "image/jpeg" or "image/jpg" => new byte[] { 0xFF, 0xD8, 0xFF },
+            "image/png" => new byte[] { 0x89, 0x50, 0x4E, 0x47 },
+            "image/gif" => new byte[] { 0x47, 0x49, 0x46, 0x38 },
+            _ => throw new ArgumentException("Unsupported content type"),
+        };
+
+        using var fileContent = new ByteArrayContent(imageBytes);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        content.Add(fileContent, "file", fileName);
+
+        // Act
+        var response = await client.PostAsync(
+            new Uri("/api/endpoint", UriKind.Relative),
+            content
+        );
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+}
+```
+
+#### CustomWebApplicationFactory Template
+```csharp
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using Teqniqly.Envino.Application.AiProviders;
+using Teqniqly.Results;
+
+namespace Teqniqly.Envino.Api.Tests;
+
+/// <summary>
+/// Custom WebApplicationFactory for integration tests.
+/// Registers mock services to allow tests to run without real implementations.
+/// </summary>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ConfigureServices(services =>
+        {
+            // Remove any existing service registration
+            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IService));
+            if (descriptor != null)
+            {
+                services.Remove(descriptor);
+            }
+
+            // Register a mock service with default behavior
+            var mockService = Substitute.For<IService>();
+            mockService
+                .DoSomethingAsync(Arg.Any<Request>(), Arg.Any<CancellationToken>())
+                .Returns(Result.Success(new Response()));
+
+            services.AddSingleton(mockService);
+        });
+
+        base.ConfigureWebHost(builder);
+    }
+}
+```
+
+#### Key Patterns for Controller Testing
+1. **Service Mocking**: Use `WithWebHostBuilder` to customize services per test
+2. **File Upload Testing**: Use `MultipartFormDataContent` with `ByteArrayContent` for file uploads
+3. **Resource Disposal**: Always use `using` statements for `IDisposable` resources
+4. **URI Usage**: Use `Uri` objects instead of strings to satisfy CA2234
+5. **JSON Validation**: Use `JsonDocument` for immutable record DTOs, or `ReadFromJsonAsync<T>` for mutable DTOs
+6. **Error Response Validation**: Validate `ProblemDetails` for error responses
+7. **Theory Tests**: Use `[Theory]` with `[InlineData]` for testing multiple similar scenarios
+
+## 10. When Stuck
+
+If implementation is unclear:
+1. Re-read the design document
+2. Re-read the current implementation document
+3. Look at similar existing code in the codebase
+4. Check existing tests for patterns
+5. Ask for clarification on requirements
+
+## 11. Success Criteria
+
+Implementation is complete when:
+- [ ] All tests from design document are written and passing
+- [ ] All edge cases from design document are tested
+- [ ] Code matches implementation details in design document
+- [ ] Code follows existing codebase patterns
+- [ ] All affected files are updated as specified
+- [ ] Migration scripts are ready (if applicable)
+- [ ] Documentation is updated (if required)
+
+## 12. Important Reminders
+
+### Core TDD Principles
+- **Never skip writing tests** - TDD means test first, always
+- **Follow the design document** - It contains the solution approach
+- **Understand current implementation** - Don't break existing patterns
+- **Make tests fail first** - Verify test is actually testing something
+- **Make minimal changes** - Only change what's necessary to pass the test
+- **Refactor after green** - Improve code quality while tests pass
+- **Run tests frequently** - After each small change
+
+### Collaborative Practices
+- **Work incrementally** - One test, one implementation, one verification at a time
+- **Keep developer in the loop** - Present changes, ask for direction, wait for feedback
+- **Reference documents constantly** - Design doc, implementation doc, story doc (if available)
+- **Verify after each step** - Check alignment with documents and commits
+- **Don't assume next steps** - Ask "What's next?" rather than proceeding automatically
+- **Acknowledge commits** - When developer commits, verify it matches the design document
+- **Explain your reasoning** - Show which document section you're following and why
+
