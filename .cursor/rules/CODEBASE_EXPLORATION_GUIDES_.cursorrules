@@ -1,0 +1,110 @@
+# Cursor Rules for Codebase Exploration Guides
+
+When creating codebase exploration guides (e.g., `*_CODEBASE_EXPLORATION_GUIDE.md`), follow this structure to help new developers understand the current implementation before making changes.
+
+## Document Structure
+
+1. **Title and Overview**
+   - Title format: `Codebase Exploration Guide: [Feature/System Name]`
+   - Brief introduction explaining the purpose: "This guide helps you understand the current implementation before making changes. Follow the sections in order to build your understanding progressively."
+   - High-level overview of what the system/feature does
+   - Note current limitations or behaviors that will be addressed
+
+2. **Object Relationships**
+   - Include a Mermaid class diagram showing how all objects relate
+   - Organize by layers (Database, Data Access, Domain Models, Service Layer, etc.)
+   - Show relationships, dependencies, and data flow
+   - Use UML-style notation with `<<stereotypes>>` for clarity
+
+3. **Learning Path** (Progressive Sections)
+   - Organize sections in order of complexity/dependency
+   - Start with domain models, then work up through layers
+   - Each section should include:
+     - **Purpose**: Why this section matters
+     - **Files to Review**: List of files with brief descriptions
+     - **Key Concepts**: Important ideas to understand
+     - **What to Look For**: Specific things to notice in the code
+     - **Current Behavior**: How it works now (especially if it will change)
+
+4. **File References (Not Code)**
+   - **DO NOT include full code snippets** - use file paths and line references instead
+   - Format: `- `PS.Identity/Domain.Model/ExternalAuthenticator.cs` (lines 20-45)`
+   - Include brief descriptions of what each file contains
+   - Reference specific methods, properties, or sections when relevant
+   - Use line numbers for precise references
+
+5. **Key Concepts**
+   - Explain domain-specific terminology
+   - Clarify relationships between entities
+   - Explain architectural patterns used
+   - Note any non-obvious behaviors or design decisions
+
+6. **Data Flow**
+   - Explain how data moves through the system
+   - Show transformations at each layer
+   - Identify caching points
+   - Note where data is loaded vs. cached
+
+7. **Questions to Answer**
+   - Provide a checklist of questions developers should be able to answer after reading
+   - Organize by theme (Data Flow, Caching, Dependencies, Lifecycle, Threading, Error Handling)
+   - These help verify understanding
+
+8. **Next Steps**
+   - Actionable items after understanding the codebase
+   - Suggest drawing diagrams
+   - Recommend reviewing related proposal documents
+   - Suggest TDD approach
+
+9. **Additional Resources**
+   - Links to relevant external documentation
+   - Technologies/frameworks to understand
+   - Related patterns or concepts
+
+10. **Common Pitfalls to Avoid**
+    - List mistakes developers commonly make
+    - Thread safety issues
+    - Resource disposal concerns
+    - Configuration gotchas
+
+## Code Reference Guidelines
+
+- **Use references, not code**: Instead of showing code, reference files and line numbers
+- **Format**: `File path (lines X-Y): Description of what's there`
+- **Example**: `PS.Identity.Login/IdentityServerAdapters/IdentityProviders/ExternalIdPStore.cs (lines 45-67): Constructor loads data from service and caches in _externalIdPs field`
+- **Include context**: Explain what the code does, not just where it is
+
+## Mermaid Diagrams
+
+- Use class diagrams for object relationships
+- Use sequence diagrams for process flows
+- Use object diagrams for runtime relationships
+- Include stereotypes (`<<interface>>`, `<<database table>>`, etc.) for clarity
+- Organize by layers (Database → DAL → Domain → Service → Infrastructure)
+
+## Progressive Learning
+
+- Structure sections so each builds on the previous
+- Start simple (domain models) and progress to complex (middleware, IoC)
+- Mark sections with "Start Here" or "Read This First" when appropriate
+- Include "What You Should Understand" checkpoints
+
+## Testing References
+
+- Include test files that demonstrate how components are used
+- Reference integration tests that show the full flow
+- Note which tests validate current behavior vs. expected behavior
+
+## Current vs. Future State
+
+- Clearly distinguish "Current Implementation" from "Proposed Changes"
+- Use sections like "Current Limitations (To Be Addressed)"
+- Help developers understand what will change and why
+
+## Example Request Format
+
+When asking for a codebase exploration guide, you can say:
+- "Create a codebase exploration guide for [feature/system]"
+- "Generate a guide similar to EXTERNAL_AUTHENTICATOR_REFRESH_CODEBASE_EXPLORATION_GUIDE.md but for [different feature]"
+- "Create a guide that helps developers understand [specific area] before implementing [changes]"
+

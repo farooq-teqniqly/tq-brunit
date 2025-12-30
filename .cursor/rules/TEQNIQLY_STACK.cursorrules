@@ -1,0 +1,118 @@
+# Cursor Rules for Teqniqly Stack Development
+
+### Project defaults (must follow)
+- Target framework: **.NET 9**
+- Orchestration: **.NET Aspire**
+- API style: **ASP.NET Core Web API with Controllers** (do **not** use Minimal APIs unless explicitly requested)
+- Database: **SQL Server 2025**
+- AuthN/AuthZ: **JWT auth with Google** (OIDC/JWT bearer)
+- Architectural style: **CQS / CQRS-light**
+  - **Writes:** EF Core (DbContext + transactions as needed)
+  - **Reads:** Dapper (query-only models; avoid EF tracking for reads)
+- Messaging/dispatch: **Mediator pattern using `Teqniqly.Arbiter`**
+- Result handling: **Results pattern using `Teqniqly.Results`**
+
+### Non-negotiables
+- Do not introduce alternative stacks without explicit instruction:
+  - No Minimal APIs, no gRPC, no GraphQL, no MassTransit (unless asked)
+  - No NUnit (tests should be **XUnit**) unless asked
+  - No Moq (prefer **NSubstitute**) unless asked
+  - No PostgreSQL/Cosmos unless asked
+  - No AutoMapper (use **manual mapping** - explicit mapping methods/constructors)
+  - No FluentAssertions (use **built-in xUnit assertions** - Assert.Equal, Assert.True, etc.)
+- Prefer **vertical slice** organization for features (commands/queries grouped by feature).
+- Keep changes small, incremental, and aligned to the existing patterns in this repo.
+
+### Solution layout (recommended)
+- `src/<Product>.AppHost/` (Aspire AppHost)
+- `src/<Product>.ServiceDefaults/` (Aspire defaults)
+- `src/<Product>.Api/` (Controllers, composition root)
+- `src/<Product>.Application/` (CQS handlers, Arbiter handlers, DTOs)
+- `src/<Product>.Domain/` (entities, value objects, domain rules)
+- `src/<Product>.Infrastructure/` (EF Core, Dapper, repositories, adapters)
+- `tests/<Product>.Tests/` (unit tests)
+- `tests/<Product>.IntegrationTests/` (integration tests; Testcontainers if applicable)
+- `docs/` (exploration, proposals, stories)
+
+### CQS conventions
+- **Commands** (writes):
+  - Handler uses EF Core DbContext
+  - Return `Result` / `Result<T>` from `Teqniqly.Results`
+  - Raise domain events only if the design calls for it
+- **Queries** (reads):
+  - Use Dapper with parameterized SQL
+  - Return DTOs/read models (no EF entities)
+  - Keep SQL in a dedicated folder (e.g., `Infrastructure/Queries/Sql/`) or embedded resources—choose one and be consistent
+
+### Arbiter conventions
+- All handlers must be registered via DI in the API composition root (or a single shared DI module).
+- Handlers should be small, focused, and testable (dependencies injected).
+- Prefer request/response messages that are immutable records.
+
+### Results conventions
+- Do not throw for expected outcomes (validation, not found, conflict).
+- Map results to HTTP responses in one place (e.g., an API result mapper/filter).
+- Define error codes/messages consistently.
+- **Teqniqly.Results Documentation**: For detailed usage, examples, and API reference, see the [Teqniqly.Results README](https://github.com/farooq-teqniqly/tq-results/blob/main/README.md)
+  - Key types: `IResult<T>`, `Error`, `Result` (static factory), `Unit`
+  - Create custom error types by inheriting from `Error` (prefer records)
+  - Use `Result.Success<T>(value)` and `Result.Failure<T>(error)` for creating results
+  - Check `result.IsSuccess` or `result.IsFailure` before accessing value/error
+  - Use `result.GetValue()` and `result.GetError()` to access the value or error (guaranteed non-null)
+
+### API conventions
+- Controllers:
+  - Thin controllers: validate input, call Arbiter, map Result → HTTP
+  - Use route naming conventions consistently
+- Auth:
+  - Validate JWT bearer tokens from Google
+  - Enforce authorization policies centrally (attributes/policies)
+  - Never log tokens or PII
+
+### Database conventions (SQL Server 2025)
+- Migrations via EF Core migrations (unless the repo specifies DACPAC/DbUp)
+- Indexing: add only when justified by query patterns
+- Concurrency: prefer rowversion/concurrency tokens where relevant
+- Dapper queries must be fully parameterized (no string concatenation)
+
+### Testing conventions
+- Unit tests: XUnit + NSubstitute
+  - Use **built-in xUnit assertions** (Assert.Equal, Assert.True, Assert.NotNull, etc.)
+  - Do **not** use FluentAssertions
+- Integration tests:
+  - Prefer Testcontainers where feasible
+  - Keep integration tests deterministic and isolated
+- TDD expected:
+  - Write failing test first (RED), then minimum code (GREEN), then refactor
+
+### Mapping conventions
+- **Manual mapping only**: Do not use AutoMapper
+- Use explicit mapping methods, constructors, or extension methods
+- Keep mapping logic in Application layer (DTOs) or Infrastructure layer (for persistence models)
+- Example patterns:
+  - `ToDto()` extension methods on domain entities
+  - Static factory methods: `Dto.FromEntity(entity)`
+  - Constructor-based mapping: `new Dto(entity.Property1, entity.Property2)`
+
+### Immutability and data protection conventions
+- **Byte array properties**: Never expose `byte[]` directly from properties (CA1819 violation)
+  - Use `ReadOnlyMemory<byte>` for byte array properties to prevent mutations
+  - Create defensive copies in constructors/factory methods before storing
+  - Pattern: Accept `byte[]` in constructor, create copy, store as `ReadOnlyMemory<byte>`
+  - Example: See `MenuItem.Image`, `WineList.Image`, `ImageSize` value object
+  - This prevents external code from mutating internal data through property access
+
+### Documentation expectations
+- Use these docs as the source of truth for agent work:
+  - `docs/exploration/*`
+  - `docs/proposals/*`
+  - `docs/stories/*`
+- For any non-trivial change: create/update proposal + stories before implementing.
+
+---
+
+## Optional: repo-specific overrides section
+Add a short section at the bottom of your rule file for repo-specific exceptions, e.g.:
+- “This repo uses DbUp instead of EF migrations”
+- “This repo uses Minimal APIs for legacy reasons”
+- “This repo uses different auth provider”
