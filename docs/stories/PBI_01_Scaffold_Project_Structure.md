@@ -36,14 +36,14 @@ So that **I can build, test, and package the library reliably**
 
 ## Acceptance Criteria
 
-- [ ] `Teqniqly.BRUnit.Testing` project exists and targets .NET 10
-- [ ] `Teqniqly.BRUnit.Testing.Tests` project exists with xUnit and NSubstitute
-- [ ] Solution builds successfully with no warnings
-- [ ] Test project runs successfully (even with no tests)
+- [x] `Teqniqly.BRUnit.Testing` project exists and targets .NET 10
+- [x] `Teqniqly.BRUnit.Testing.Tests` project exists with xUnit and NSubstitute
+- [x] Solution builds successfully with no warnings
+- [x] Test project runs successfully (even with no tests)
 - [ ] CI pipeline builds and runs tests
-- [ ] Core library has zero dependencies on test frameworks
-- [ ] Project properties match Teqniqly stack conventions (nullable enabled, implicit usings, etc.)
-- [ ] Code analysis rules configured (SonarAnalyzer per Directory.Build.props)
+- [x] Core library has zero dependencies on test frameworks
+- [x] Project properties match Teqniqly stack conventions (nullable enabled, implicit usings, etc.)
+- [x] Code analysis rules configured (SonarAnalyzer per Directory.Build.props)
 
 ---
 
