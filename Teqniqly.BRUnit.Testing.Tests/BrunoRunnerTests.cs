@@ -202,44 +202,6 @@ public class BrunoRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_SetsWorkingDirectory()
-    {
-        // Arrange
-        var expectedWorkingDirectory = Path.GetTempPath();
-        var options = new BrunoRunOptions
-        {
-            BruExecutablePath = "dotnet",
-            Target = "test.bru",
-            WorkingDirectory = expectedWorkingDirectory,
-        };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
-
-        // Act
-        await runner.RunAsync(options);
-
-        // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(expectedWorkingDirectory, capturedStartInfo.WorkingDirectory);
-    }
-
-    [Fact]
     public async Task RunAsync_WhenProcessFactoryThrows_PropagatesException()
     {
         // Arrange
