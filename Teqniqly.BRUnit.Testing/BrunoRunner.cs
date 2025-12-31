@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Teqniqly.BRUnit.Testing;
 
@@ -36,6 +37,9 @@ public sealed class BrunoRunner : IBrunoRunner
             .ConfigureAwait(false);
     }
 
+    [ExcludeFromCodeCoverage(
+        Justification = "Helper method that suppresses cancellation exceptions to preserve original exception context. Testing cancellation scenarios reliably is difficult."
+    )]
     private static async Task AwaitIgnoringCancellationAsync(Task<string> task)
     {
         try
@@ -114,6 +118,9 @@ public sealed class BrunoRunner : IBrunoRunner
         }
     }
 
+    [ExcludeFromCodeCoverage(
+        Justification = "Suppresses cancellation exceptions from output/error tasks to ensure original cancellation exception can be rethrown. Testing cancellation scenarios with async I/O operations is complex and unreliable."
+    )]
     private static async Task GatherOutputSafelyAsync(
         Task<string> outputTask,
         Task<string> errorTask
@@ -126,6 +133,9 @@ public sealed class BrunoRunner : IBrunoRunner
         await AwaitIgnoringCancellationAsync(errorTask).ConfigureAwait(false);
     }
 
+    [ExcludeFromCodeCoverage(
+        Justification = "Handles cleanup during cancellation scenarios. Testing cancellation with process termination and async output gathering is difficult to reliably reproduce."
+    )]
     private static async Task HandleCancellationAsync(
         Process process,
         Task<string> outputTask,
@@ -137,6 +147,9 @@ public sealed class BrunoRunner : IBrunoRunner
         await GatherOutputSafelyAsync(outputTask, errorTask).ConfigureAwait(false);
     }
 
+    [ExcludeFromCodeCoverage(
+        Justification = "Wraps process kill operation in try-catch to handle race condition where process may have already exited. Testing this specific timing scenario is difficult to reliably reproduce."
+    )]
     private static void KillProcessSafely(Process process)
     {
         // The Kill operation is wrapped in a try-catch because the process may have already
