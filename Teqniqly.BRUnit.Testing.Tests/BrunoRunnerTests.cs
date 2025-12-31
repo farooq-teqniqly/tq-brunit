@@ -33,7 +33,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -70,7 +69,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -118,7 +116,6 @@ public class BrunoRunnerTests
     {
         // Arrange
         // Use echo as a simple test command that produces output
-        // Arguments will be: "run test-output"
         var options = new BrunoRunOptions
         {
             BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "echo",
@@ -151,7 +148,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -169,7 +165,7 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotNull(capturedStartInfo);
-        // Arguments should be in ArgumentList (runtime handles escaping)
+        // Arguments in ArgumentList (runtime handles escaping)
         Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
         Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
         Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
@@ -223,7 +219,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -284,7 +279,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -334,7 +328,6 @@ public class BrunoRunnerTests
             .Start(Arg.Any<ProcessStartInfo>())
             .Returns(callInfo =>
             {
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -388,7 +381,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -431,7 +423,6 @@ public class BrunoRunnerTests
             .Returns(callInfo =>
             {
                 capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                // Return a real process that will complete quickly
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -466,31 +457,23 @@ public class BrunoRunnerTests
     public async Task RunAsync_WithRealBrunoCli_ExecutesSuccessfully()
     {
         // Arrange
-        // Check if Bruno CLI is available by trying to run it directly
         if (!IsBrunoCliAvailable())
         {
-            // Skip test if Bruno CLI is not available
             return;
         }
 
         // Use bru run -h to get help output (this is a simple command that will succeed)
         // Note: For a real integration test with actual test execution,
         // you would need an actual .bru file or collection folder
-        var options = new BrunoRunOptions
-        {
-            BruExecutablePath = "bru",
-            Target = "-h", // Bruno will interpret this as a help flag
-        };
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "-h" };
         var runner = new BrunoRunner(new ProcessFactory());
 
         // Act
         var result = await runner.RunAsync(options);
 
         // Assert
-        // Bruno should return success (exit code 0) and show help text
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.ExitCode);
-        // Help output should contain information about the run command
         Assert.NotEmpty(result.StandardOutput);
     }
 
@@ -543,7 +526,6 @@ public class BrunoRunnerTests
         try
         {
             // Try to run bru --version directly (not through BrunoRunner, as that always adds "run")
-            // to check if Bruno CLI is available
             var startInfo = new ProcessStartInfo
             {
                 FileName = "bru",
@@ -560,25 +542,21 @@ public class BrunoRunnerTests
             }
 
             process.WaitForExit();
-            // If we get here without exception, Bruno CLI is available
             return process.ExitCode == 0
                 || !string.IsNullOrEmpty(process.StandardOutput.ReadToEnd());
         }
         catch (InvalidOperationException)
         {
-            // Process could not be started (executable not found)
             return false;
         }
         catch (System.ComponentModel.Win32Exception)
         {
-            // Executable not found (Windows-specific)
             return false;
         }
 #pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception)
 #pragma warning restore CA1031
         {
-            // Any other exception indicates Bruno CLI is not available
             return false;
         }
     }

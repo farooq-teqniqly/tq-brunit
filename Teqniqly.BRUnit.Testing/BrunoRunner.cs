@@ -63,17 +63,14 @@ public sealed class BrunoRunner : IBrunoRunner
         // Build arguments using ArgumentList for proper cross-platform escaping
         startInfo.ArgumentList.Add("run");
 
-        // Add --env flag if environment name is specified
         if (!string.IsNullOrWhiteSpace(options.EnvironmentName))
         {
             startInfo.ArgumentList.Add("--env");
             startInfo.ArgumentList.Add(options.EnvironmentName);
         }
 
-        // Add target (file or folder) as the last argument
         startInfo.ArgumentList.Add(options.Target);
 
-        // Add environment variables from options
         SetEnvironmentVariables(startInfo, options.EnvironmentVariables);
 
         return startInfo;
