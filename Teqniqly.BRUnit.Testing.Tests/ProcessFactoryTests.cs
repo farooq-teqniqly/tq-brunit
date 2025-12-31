@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 
 namespace Teqniqly.BRUnit.Testing.Tests;
 
@@ -12,11 +13,12 @@ public class ProcessFactoryTests
     {
         // Arrange
         var factory = new ProcessFactory();
+        var expectedWorkingDirectory = Path.Combine(Path.GetTempPath(), "test", "directory");
         var startInfo = new ProcessStartInfo
         {
             FileName = "nonexistent-executable-that-does-not-exist-12345",
             Arguments = "--test-arg",
-            WorkingDirectory = @"C:\test\directory",
+            WorkingDirectory = expectedWorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
         };
@@ -31,7 +33,7 @@ public class ProcessFactoryTests
         );
         Assert.Contains("Arguments='--test-arg'", message, StringComparison.Ordinal);
         Assert.Contains(
-            "WorkingDirectory='C:\\test\\directory'",
+            $"WorkingDirectory='{expectedWorkingDirectory}'",
             message,
             StringComparison.Ordinal
         );
