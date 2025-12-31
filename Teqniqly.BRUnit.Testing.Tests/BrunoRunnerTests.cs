@@ -9,6 +9,7 @@ namespace Teqniqly.BRUnit.Testing.Tests;
 
 public class BrunoRunnerTests
 {
+    private static readonly TimeSpan TimeoutForTesting = TimeSpan.FromMilliseconds(100);
     [Fact]
     public void Constructor_WithNullProcessFactory_ThrowsArgumentNullException()
     {
@@ -218,21 +219,11 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenExecutionExceedsTimeout_ThrowsTimeoutException()
     {
         // Arrange
-        var processFactory = Substitute.For<IProcessFactory>();
-        Process? hangingProcess = null;
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(CreateHangingProcess);
+        var runner = new BrunoRunner(processFactory);
+
         try
         {
-            hangingProcess = CreateHangingProcess();
-            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
-
-            var options = new BrunoRunOptions
-            {
-                BruExecutablePath = "bru",
-                Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100),
-            };
-            var runner = new BrunoRunner(processFactory);
-
             // Act & Assert
             var exception = await Assert
                 .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
@@ -242,21 +233,7 @@ public class BrunoRunnerTests
         }
         finally
         {
-            try
-            {
-                if (hangingProcess?.HasExited == false)
-                {
-                    hangingProcess.Kill(entireProcessTree: true);
-                }
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch
-#pragma warning restore CA1031
-            {
-                // Ignore cleanup errors
-            }
-
-            hangingProcess?.Dispose();
+            CleanupHangingProcess(hangingProcess);
         }
     }
 
@@ -286,21 +263,11 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenTimeoutOccurs_KillsProcess()
     {
         // Arrange
-        var processFactory = Substitute.For<IProcessFactory>();
-        Process? hangingProcess = null;
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(CreateHangingProcess);
+        var runner = new BrunoRunner(processFactory);
+
         try
         {
-            hangingProcess = CreateHangingProcess();
-            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
-
-            var options = new BrunoRunOptions
-            {
-                BruExecutablePath = "bru",
-                Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100),
-            };
-            var runner = new BrunoRunner(processFactory);
-
             var startTime = DateTime.UtcNow;
 
             // Act
@@ -332,21 +299,7 @@ public class BrunoRunnerTests
         }
         finally
         {
-            try
-            {
-                if (hangingProcess?.HasExited == false)
-                {
-                    hangingProcess.Kill(entireProcessTree: true);
-                }
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch
-#pragma warning restore CA1031
-            {
-                // Ignore cleanup errors
-            }
-
-            hangingProcess?.Dispose();
+            CleanupHangingProcess(hangingProcess);
         }
     }
 
@@ -354,21 +307,11 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenTimeoutOccurs_ThrowsTimeoutException_WithOutputGeneratingProcess()
     {
         // Arrange
-        var processFactory = Substitute.For<IProcessFactory>();
-        Process? hangingProcess = null;
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(CreateHangingProcessWithOutput);
+        var runner = new BrunoRunner(processFactory);
+
         try
         {
-            hangingProcess = CreateHangingProcessWithOutput();
-            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
-
-            var options = new BrunoRunOptions
-            {
-                BruExecutablePath = "bru",
-                Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100),
-            };
-            var runner = new BrunoRunner(processFactory);
-
             // Act & Assert
             var exception = await Assert
                 .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
@@ -379,21 +322,7 @@ public class BrunoRunnerTests
         }
         finally
         {
-            try
-            {
-                if (hangingProcess?.HasExited == false)
-                {
-                    hangingProcess.Kill(entireProcessTree: true);
-                }
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch
-#pragma warning restore CA1031
-            {
-                // Ignore cleanup errors
-            }
-
-            hangingProcess?.Dispose();
+            CleanupHangingProcess(hangingProcess);
         }
     }
 
@@ -688,6 +617,43 @@ public class BrunoRunnerTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static (Process hangingProcess, BrunoRunOptions options, IProcessFactory processFactory) SetupTimeoutTest(
+        Func<Process> createHangingProcess
+    )
+    {
+        var processFactory = Substitute.For<IProcessFactory>();
+        var hangingProcess = createHangingProcess();
+        processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "bru",
+            Target = "test.bru",
+            Timeout = TimeoutForTesting,
+        };
+
+        return (hangingProcess, options, processFactory);
+    }
+
+    private static void CleanupHangingProcess(Process? hangingProcess)
+    {
+        try
+        {
+            if (hangingProcess?.HasExited == false)
+            {
+                hangingProcess.Kill(entireProcessTree: true);
+            }
+        }
+#pragma warning disable CA1031 // Do not catch general exception types
+        catch
+#pragma warning restore CA1031
+        {
+            // Ignore cleanup errors
+        }
+
+        hangingProcess?.Dispose();
     }
 
     private static Process CreateHangingProcess()
