@@ -686,6 +686,48 @@ Teqniqly.BRUnit.Testing.Tests/
 
 ## Appendix B: Implementation Notes
 
+### Bruno CLI Command Options
+
+The Bruno CLI command structure and available options are documented at [https://docs.usebruno.com/bru-cli/commandOptions](https://docs.usebruno.com/bru-cli/commandOptions).
+
+**Basic command format:**
+
+```bash
+bru run [options] [target]
+```
+
+Where `target` is a `.bru` file or folder containing Bruno collection files.
+
+**Relevant options for initial implementation:**
+
+1. **Setup options:**
+
+   - `--env [string]`: Specify environment to run with (maps to `BrunoRunOptions.EnvironmentName`)
+   - `--env-var [string]`: Overwrite a single environment variable (multiple usages possible)
+   - `--env-file [string]`: Path to the environment file (.bru or .json) to use
+
+2. **Request options:**
+
+   - `--delay [number]`: Delay between each requests (in milliseconds)
+   - `--tests-only`: Only run requests that have tests or active assertions
+   - `--bail`: Stop execution after a failure of a request, test, or assertion
+   - `--tags [string]`: Only run requests that have ALL of the specified tags (comma-separated)
+   - `--exclude-tags [string]`: Skip requests that have ANY of the specified tags (comma-separated)
+   - `--parallel`: Run requests in parallel order
+
+3. **Output & Reporting options:**
+   - `--reporter-json [string]`: Path to generate a JSON report
+   - `--reporter-junit [string]`: Path to generate a JUnit report
+   - `--reporter-html [string]`: Path to generate an HTML report
+
+**Note:** For the initial implementation (v0.1.0), we focus on the core execution path:
+
+- Target file/folder (required positional argument)
+- `--env` flag for environment name (if `BrunoRunOptions.EnvironmentName` is provided)
+- Environment variables passed via process environment (not `--env-var` flags)
+
+Additional options may be supported in future versions based on user needs.
+
 ### Process execution pattern
 
 ```csharp
@@ -700,10 +742,12 @@ public async Task<BrunoRunResult> RunAsync(BrunoRunOptions options, Cancellation
     var executablePath = ResolveExecutablePath(options.BruExecutablePath);
 
     // 3. Build process start info
+    // Build arguments: "run [--env <name>] <target>"
+    var arguments = BuildArguments(options);
     var startInfo = new ProcessStartInfo
     {
         FileName = executablePath,
-        Arguments = BuildArguments(options),
+        Arguments = arguments,
         WorkingDirectory = options.WorkingDirectory,
         RedirectStandardOutput = true,
         RedirectStandardError = true,
@@ -769,6 +813,47 @@ private static string ResolveExecutablePath(string path)
     return path;
 }
 ```
+
+### Building Bruno CLI arguments
+
+The `BuildArguments` method constructs the command-line arguments for the Bruno CLI based on `BrunoRunOptions`:
+
+```csharp
+private static string BuildArguments(BrunoRunOptions options)
+{
+    var args = new List<string> { "run" };
+
+    // Add --env flag if environment name is specified
+    if (!string.IsNullOrWhiteSpace(options.EnvironmentName))
+    {
+        args.Add("--env");
+        args.Add(options.EnvironmentName);
+    }
+
+    // Add target (file or folder) as the last argument
+    args.Add(options.Target);
+
+    return string.Join(" ", args.Select(arg => EscapeArgument(arg)));
+}
+
+private static string EscapeArgument(string argument)
+{
+    // Escape arguments that contain spaces or special characters
+    if (argument.Contains(' ', StringComparison.Ordinal))
+    {
+        return $"\"{argument.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+    }
+    return argument;
+}
+```
+
+**Example argument strings:**
+
+- `run test.bru` (basic execution)
+- `run --env production test.bru` (with environment)
+- `run --env staging ./collections/api-tests` (folder target with environment)
+
+**Reference:** [Bruno CLI Command Options Documentation](https://docs.usebruno.com/bru-cli/commandOptions)
 
 ---
 
