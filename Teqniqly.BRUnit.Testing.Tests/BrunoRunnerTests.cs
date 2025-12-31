@@ -174,59 +174,6 @@ public class BrunoRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_PassesEnvironmentVariables()
-    {
-        // Arrange
-        var envVars = ImmutableDictionary<string, string?>
-            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
-            .Add("TEST_VAR_1", "value1")
-            .Add("TEST_VAR_2", "value2");
-
-        // Use a command that prints environment variables
-        // BrunoRunner always prepends "run", so we need a command that handles this
-        // On Linux: Use 'sh' with Target that executes a command printing env vars
-        // The command becomes: sh run -c "printenv TEST_VAR_1 TEST_VAR_2"
-        // To work around this, we use 'sh' with Target that makes "run" part of the command string:
-        // sh -c "printenv TEST_VAR_1 TEST_VAR_2" but "run" will be prepended making it invalid
-        // Solution: Use 'sh' with a command that ignores the first argument and prints env vars
-        // We'll use: sh -c "printenv TEST_VAR_1 TEST_VAR_2" and make "run" be ignored
-        // Actually, the simplest: use 'printenv' directly and check if it works despite "run" prefix
-        // But printenv run VAR will try to print var named "run". Better: use a wrapper approach
-        var options = new BrunoRunOptions
-        {
-            BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "printenv",
-            Target = OperatingSystem.IsWindows()
-                ? "/c echo %TEST_VAR_1% %TEST_VAR_2%"
-                : "TEST_VAR_1 TEST_VAR_2", // printenv run TEST_VAR_1 TEST_VAR_2 - "run" will be treated as a var name
-            EnvironmentVariables = envVars,
-        };
-        var runner = new BrunoRunner(new ProcessFactory());
-
-        // Act
-        var result = await runner.RunAsync(options);
-
-        // Assert
-        // Note: On Linux, printenv returns non-zero exit code when a requested variable doesn't exist
-        // Since BrunoRunner prepends "run", the command becomes: printenv run TEST_VAR_1 TEST_VAR_2
-        // This will fail because "run" doesn't exist as an env var, but it will still print TEST_VAR_1 and TEST_VAR_2
-        // So we check the output even if exit code is non-zero
-        var outputContainsValues =
-            result.StandardOutput.Contains("value1", StringComparison.Ordinal)
-            && result.StandardOutput.Contains("value2", StringComparison.Ordinal);
-
-        Assert.True(
-            result.IsSuccess || outputContainsValues,
-            $"Process failed with ExitCode: {result.ExitCode}. "
-                + $"StandardOutput: '{result.StandardOutput}'. "
-                + $"StandardError: '{result.StandardError}'. "
-                + $"Output contains value1: {result.StandardOutput.Contains("value1", StringComparison.Ordinal)}, "
-                + $"value2: {result.StandardOutput.Contains("value2", StringComparison.Ordinal)}"
-        );
-        Assert.Contains("value1", result.StandardOutput, StringComparison.Ordinal);
-        Assert.Contains("value2", result.StandardOutput, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task RunAsync_WhenProcessFactoryThrows_PropagatesException()
     {
         // Arrange
@@ -346,20 +293,27 @@ public class BrunoRunnerTests
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task RunAsync_WithEnvironmentVariables_PassesToProcessStartInfo()
+    [Theory]
+    [InlineData("TEST_VAR_1", "value1", "TEST_VAR_2", "value2")]
+    [InlineData("CUSTOM_VAR", "custom_value", "ANOTHER_VAR", "another_value")]
+    public async Task RunAsync_WithEnvironmentVariables_PassesToProcessStartInfo(
+        string var1Name,
+        string var1Value,
+        string var2Name,
+        string var2Value
+    )
     {
         // Arrange
-        var expectedEnvVars = ImmutableDictionary<string, string?>
+        var envVars = ImmutableDictionary<string, string?>
             .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
-            .Add("CUSTOM_VAR", "custom_value")
-            .Add("ANOTHER_VAR", "another_value");
+            .Add(var1Name, var1Value)
+            .Add(var2Name, var2Value);
 
         var options = new BrunoRunOptions
         {
             BruExecutablePath = "dotnet",
             Target = "--version",
-            EnvironmentVariables = expectedEnvVars,
+            EnvironmentVariables = envVars,
         };
         var processFactory = Substitute.For<IProcessFactory>();
         ProcessStartInfo? capturedStartInfo = null;
@@ -385,8 +339,8 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotNull(capturedStartInfo);
-        Assert.Equal("custom_value", capturedStartInfo.Environment["CUSTOM_VAR"]);
-        Assert.Equal("another_value", capturedStartInfo.Environment["ANOTHER_VAR"]);
+        Assert.Equal(var1Value, capturedStartInfo.Environment[var1Name]);
+        Assert.Equal(var2Value, capturedStartInfo.Environment[var2Name]);
     }
 
     [Fact]
