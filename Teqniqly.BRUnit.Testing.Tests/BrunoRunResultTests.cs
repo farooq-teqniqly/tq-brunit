@@ -67,7 +67,6 @@ public class BrunoRunResultTests
     [Fact]
     public void GetHashCode_WithSameValues_ReturnsSameHash()
     {
-        // Arrange
         var result1 = new BrunoRunResult
         {
             ExitCode = 0,

@@ -23,8 +23,8 @@ public class BrunoRunOptionsTests
 
         // Verify case-insensitive comparer
         options.EnvironmentVariables["TEST"] = "value1";
-        Assert.Equal("value1", options.EnvironmentVariables["test"]); // Should find by case-insensitive key
-        Assert.Equal("value1", options.EnvironmentVariables["TEST"]); // Should find by original key
+        Assert.Equal("value1", options.EnvironmentVariables["test"]);
+        Assert.Equal("value1", options.EnvironmentVariables["TEST"]);
     }
 
     // Note: Immutability (AC-44) is enforced at compile-time by the record type and init-only accessors.
@@ -76,7 +76,7 @@ public class BrunoRunOptionsTests
     [Fact]
     public void Equals_WithSameValues_ReturnsTrue()
     {
-        // Arrange - Use same dictionary instance for reference equality
+        // Use same dictionary instance for reference equality (records compare dictionaries by reference)
         var envVars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         var options1 = new BrunoRunOptions
         {
@@ -107,7 +107,7 @@ public class BrunoRunOptionsTests
     [Fact]
     public void GetHashCode_WithSameValues_ReturnsSameHash()
     {
-        // Arrange - Use same dictionary instance for reference equality
+        // Use same dictionary instance for reference equality (records compare dictionaries by reference)
         var envVars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         var options1 = new BrunoRunOptions
         {
