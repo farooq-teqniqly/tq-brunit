@@ -182,12 +182,14 @@ public class BrunoRunnerTests
             .Add("TEST_VAR_1", "value1")
             .Add("TEST_VAR_2", "value2");
 
+        // Use 'printenv' on Unix which prints specific environment variables
+        // On Windows, use 'cmd' with /c, but account for the "run" prefix that BrunoRunner adds
         var options = new BrunoRunOptions
         {
-            BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "sh",
+            BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "printenv",
             Target = OperatingSystem.IsWindows()
                 ? "/c echo %TEST_VAR_1% %TEST_VAR_2%"
-                : "-c \"echo $TEST_VAR_1 $TEST_VAR_2\"",
+                : "TEST_VAR_1 TEST_VAR_2",
             EnvironmentVariables = envVars,
         };
         var runner = new BrunoRunner(new ProcessFactory());
