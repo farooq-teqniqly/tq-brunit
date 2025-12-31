@@ -70,8 +70,27 @@ So that **I can run contract tests programmatically**
 
 - Reference: Proposal Section 5 (Contracts - IBrunoRunner, BrunoRunner)
 - Reference: Proposal Section 6 (Testing Strategy - Test category 3)
-- Reference: Proposal Appendix B (Process execution pattern)
+- Reference: Proposal Appendix B (Process execution pattern, Bruno CLI Command Options)
+- **Bruno CLI Documentation**: [https://docs.usebruno.com/bru-cli/commandOptions](https://docs.usebruno.com/bru-cli/commandOptions) - Command options reference
 - Use TDD: Write tests first, then implement
 - For unit tests, consider using a test executable or mocking Process (if feasible)
 - **Dependencies**: PBI-01 (Scaffold), PBI-02 (Core Models)
 - **Blocks**: PBI-04, PBI-05
+
+### Slice 8: Build Bruno CLI Arguments
+
+The Bruno CLI command structure follows the pattern:
+
+```bash
+bru run [--env <name>] <target>
+```
+
+Where:
+
+- `run` is the command
+- `--env <name>` is optional (when `BrunoRunOptions.EnvironmentName` is provided)
+- `<target>` is the required file or folder path (from `BrunoRunOptions.Target`)
+
+**Reference:** [Bruno CLI Command Options Documentation](https://docs.usebruno.com/bru-cli/commandOptions)
+
+The implementation should build these arguments correctly, escaping paths that contain spaces or special characters.
