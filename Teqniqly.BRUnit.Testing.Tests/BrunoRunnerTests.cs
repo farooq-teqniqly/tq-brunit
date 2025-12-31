@@ -694,6 +694,7 @@ public class BrunoRunnerTests
     {
         // Create a process that will hang (sleep for a long time)
         // Use ping on Windows (takes ~10 seconds for 11 pings) or sleep on Unix
+        var processFactory = new ProcessFactory();
         if (OperatingSystem.IsWindows())
         {
             // ping -n 11 127.0.0.1 takes about 10 seconds (11 pings with 1 second intervals)
@@ -706,14 +707,7 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                );
-            }
-            return process;
+            return processFactory.Start(startInfo);
         }
         else
         {
@@ -726,20 +720,14 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                );
-            }
-            return process;
+            return processFactory.Start(startInfo);
         }
     }
 
     private static Process CreateHangingProcessWithOutput()
     {
         // Create a process that writes output and then hangs
+        var processFactory = new ProcessFactory();
         if (OperatingSystem.IsWindows())
         {
             // Use PowerShell to echo and then sleep
@@ -752,14 +740,7 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                );
-            }
-            return process;
+            return processFactory.Start(startInfo);
         }
         else
         {
@@ -772,14 +753,7 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                );
-            }
-            return process;
+            return processFactory.Start(startInfo);
         }
     }
 
@@ -814,6 +788,7 @@ public class BrunoRunnerTests
     {
         try
         {
+            var processFactory = new ProcessFactory();
             var startInfo = new ProcessStartInfo
             {
                 FileName = bruPath,
@@ -823,19 +798,11 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            using var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                return false;
-            }
+            using var process = processFactory.Start(startInfo);
 
             process.WaitForExit();
             return process.ExitCode == 0
                 || !string.IsNullOrEmpty(process.StandardOutput.ReadToEnd());
-        }
-        catch (System.ComponentModel.Win32Exception)
-        {
-            return false;
         }
         catch (InvalidOperationException)
         {
