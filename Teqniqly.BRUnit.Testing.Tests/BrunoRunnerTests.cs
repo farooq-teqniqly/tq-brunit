@@ -259,50 +259,6 @@ public class BrunoRunnerTests
     }
 
     [SkippableFact]
-    public async Task RunAsync_WhenTimeoutOccurs_CapturesPartialOutput()
-    {
-        // Arrange
-        var processFactory = Substitute.For<IProcessFactory>();
-        Process? hangingProcess = null;
-        try
-        {
-            hangingProcess = CreateHangingProcessWithOutput();
-            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
-
-            var options = new BrunoRunOptions
-            {
-                BruExecutablePath = "bru",
-                Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100),
-            };
-            var runner = new BrunoRunner(processFactory);
-
-            // Act & Assert
-            var exception = await Assert
-                .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
-                .ConfigureAwait(false);
-            Assert.NotNull(exception);
-            // Note: We can't easily verify partial output was captured without exposing internal state,
-            // but the fact that the exception was thrown means the timeout logic executed
-        }
-        finally
-        {
-            try
-            {
-                hangingProcess?.Kill(entireProcessTree: true);
-            }
-#pragma warning disable CA1031 // Do not catch general exception types
-            catch
-#pragma warning restore CA1031
-            {
-                // Ignore cleanup errors
-            }
-
-            hangingProcess?.Dispose();
-        }
-    }
-
-    [SkippableFact]
     public async Task RunAsync_WhenTimeoutOccurs_KillsProcess()
     {
         // Arrange
@@ -349,6 +305,50 @@ public class BrunoRunnerTests
             {
                 // Process already exited/killed - this is expected
             }
+        }
+        finally
+        {
+            try
+            {
+                hangingProcess?.Kill(entireProcessTree: true);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch
+#pragma warning restore CA1031
+            {
+                // Ignore cleanup errors
+            }
+
+            hangingProcess?.Dispose();
+        }
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_WhenTimeoutOccurs_ThrowsTimeoutException_WithOutputGeneratingProcess()
+    {
+        // Arrange
+        var processFactory = Substitute.For<IProcessFactory>();
+        Process? hangingProcess = null;
+        try
+        {
+            hangingProcess = CreateHangingProcessWithOutput();
+            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+            var options = new BrunoRunOptions
+            {
+                BruExecutablePath = "bru",
+                Target = "test.bru",
+                Timeout = TimeSpan.FromMilliseconds(100),
+            };
+            var runner = new BrunoRunner(processFactory);
+
+            // Act & Assert
+            var exception = await Assert
+                .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
+                .ConfigureAwait(false);
+            Assert.NotNull(exception);
+            // Note: We can't easily verify partial output was captured without exposing internal state,
+            // but the fact that the exception was thrown means the timeout logic executed
         }
         finally
         {
