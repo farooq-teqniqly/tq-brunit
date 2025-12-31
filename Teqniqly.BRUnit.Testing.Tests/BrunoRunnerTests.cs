@@ -197,7 +197,6 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenExecutionExceedsTimeout_ThrowsTimeoutException()
     {
         // Arrange
-        // Create a process that will hang longer than the timeout using a mocked process factory
         var processFactory = Substitute.For<IProcessFactory>();
         Process? hangingProcess = null;
         try
@@ -209,7 +208,7 @@ public class BrunoRunnerTests
             {
                 BruExecutablePath = "bru",
                 Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100), // Very short timeout
+                Timeout = TimeSpan.FromMilliseconds(100),
             };
             var runner = new BrunoRunner(processFactory);
 
@@ -222,7 +221,6 @@ public class BrunoRunnerTests
         }
         finally
         {
-            // Cleanup
             try
             {
                 hangingProcess?.Kill(entireProcessTree: true);
@@ -264,7 +262,6 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenTimeoutOccurs_CapturesPartialOutput()
     {
         // Arrange
-        // Create a process that writes output and then hangs
         var processFactory = Substitute.For<IProcessFactory>();
         Process? hangingProcess = null;
         try
@@ -276,7 +273,7 @@ public class BrunoRunnerTests
             {
                 BruExecutablePath = "bru",
                 Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100), // Very short timeout
+                Timeout = TimeSpan.FromMilliseconds(100),
             };
             var runner = new BrunoRunner(processFactory);
 
@@ -290,7 +287,6 @@ public class BrunoRunnerTests
         }
         finally
         {
-            // Cleanup
             try
             {
                 hangingProcess?.Kill(entireProcessTree: true);
@@ -310,7 +306,6 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenTimeoutOccurs_KillsProcess()
     {
         // Arrange
-        // Create a process that will hang longer than the timeout
         var processFactory = Substitute.For<IProcessFactory>();
         Process? hangingProcess = null;
         try
@@ -322,7 +317,7 @@ public class BrunoRunnerTests
             {
                 BruExecutablePath = "bru",
                 Target = "test.bru",
-                Timeout = TimeSpan.FromMilliseconds(100), // Very short timeout
+                Timeout = TimeSpan.FromMilliseconds(100),
             };
             var runner = new BrunoRunner(processFactory);
 
@@ -341,11 +336,10 @@ public class BrunoRunnerTests
 
             var elapsed = DateTime.UtcNow - startTime;
 
-            // Assert - verify process was killed by checking elapsed time
+            // Assert
             // If the process wasn't killed, this test would take much longer
             Assert.True(elapsed.TotalSeconds < 2, "Process should have been killed quickly");
 
-            // Verify process was killed
             try
             {
                 hangingProcess?.Refresh();
@@ -358,7 +352,6 @@ public class BrunoRunnerTests
         }
         finally
         {
-            // Cleanup
             try
             {
                 hangingProcess?.Kill(entireProcessTree: true);

@@ -97,10 +97,8 @@ public sealed class BrunoRunner : IBrunoRunner
             var timeoutTask = Task.Delay(timeout, cancellationToken);
             var completedTask = await Task.WhenAny(waitTask, timeoutTask).ConfigureAwait(false);
 
-            // Check if timeout occurred
             if (completedTask == timeoutTask && !process.HasExited)
             {
-                // Timeout occurred - kill process and gather output before throwing
                 await HandleProcessCleanupAsync(process, outputTask, errorTask)
                     .ConfigureAwait(false);
                 throw new TimeoutException(
@@ -110,7 +108,6 @@ public sealed class BrunoRunner : IBrunoRunner
 
             try
             {
-                // Wait for the process to exit (if it hasn't already)
                 await waitTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
@@ -183,7 +180,7 @@ public sealed class BrunoRunner : IBrunoRunner
         catch (Exception)
 #pragma warning restore CA1031
         {
-            // Ignore errors when killing the process (e.g., already exited)
+            // Ignore errors when killing the process (e.g., process may have already exited)
         }
     }
 
