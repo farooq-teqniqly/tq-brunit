@@ -41,7 +41,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -77,7 +84,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -156,7 +170,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -223,7 +244,10 @@ public class BrunoRunnerTests
         {
             try
             {
-                hangingProcess?.Kill(entireProcessTree: true);
+                if (hangingProcess?.HasExited == false)
+                {
+                    hangingProcess.Kill(entireProcessTree: true);
+                }
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch
@@ -310,7 +334,10 @@ public class BrunoRunnerTests
         {
             try
             {
-                hangingProcess?.Kill(entireProcessTree: true);
+                if (hangingProcess?.HasExited == false)
+                {
+                    hangingProcess.Kill(entireProcessTree: true);
+                }
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch
@@ -354,7 +381,10 @@ public class BrunoRunnerTests
         {
             try
             {
-                hangingProcess?.Kill(entireProcessTree: true);
+                if (hangingProcess?.HasExited == false)
+                {
+                    hangingProcess.Kill(entireProcessTree: true);
+                }
             }
 #pragma warning disable CA1031 // Do not catch general exception types
             catch
@@ -393,7 +423,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -442,7 +479,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -502,7 +546,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -544,7 +595,14 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                    );
+                }
+                return process;
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -648,7 +706,14 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            return Process.Start(startInfo)!;
+            var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                );
+            }
+            return process;
         }
         else
         {
@@ -661,7 +726,14 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            return Process.Start(startInfo)!;
+            var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                );
+            }
+            return process;
         }
     }
 
@@ -680,7 +752,14 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            return Process.Start(startInfo)!;
+            var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                );
+            }
+            return process;
         }
         else
         {
@@ -693,7 +772,14 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            return Process.Start(startInfo)!;
+            var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
+                );
+            }
+            return process;
         }
     }
 
