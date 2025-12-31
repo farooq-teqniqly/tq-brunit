@@ -101,7 +101,8 @@ public sealed class BrunoRunner : IBrunoRunner
             if (completedTask == timeoutTask && !process.HasExited)
             {
                 // Timeout occurred - kill process and gather output before throwing
-                await HandleTimeoutAsync(process, outputTask, errorTask).ConfigureAwait(false);
+                await HandleProcessCleanupAsync(process, outputTask, errorTask)
+                    .ConfigureAwait(false);
                 throw new TimeoutException(
                     $"Bruno execution exceeded timeout of {timeout.TotalSeconds} seconds."
                 );
@@ -120,7 +121,8 @@ public sealed class BrunoRunner : IBrunoRunner
                 //    another cancellation exception)
                 // 3. Gather any output/error that was captured before cancellation occurred
                 // 4. Rethrow the OperationCanceledException to preserve cancellation semantics for the caller
-                await HandleCancellationAsync(process, outputTask, errorTask).ConfigureAwait(false);
+                await HandleProcessCleanupAsync(process, outputTask, errorTask)
+                    .ConfigureAwait(false);
                 throw;
             }
 
@@ -152,23 +154,9 @@ public sealed class BrunoRunner : IBrunoRunner
     }
 
     [ExcludeFromCodeCoverage(
-        Justification = "Handles cleanup during cancellation scenarios. Testing cancellation with process termination and async output gathering is difficult to reliably reproduce."
+        Justification = "Handles cleanup during cancellation and timeout scenarios. Testing process termination and async output gathering is difficult to reliably reproduce."
     )]
-    private static async Task HandleCancellationAsync(
-        Process process,
-        Task<string> outputTask,
-        Task<string> errorTask
-    )
-    {
-        KillProcessSafely(process);
-        await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
-        await GatherOutputSafelyAsync(outputTask, errorTask).ConfigureAwait(false);
-    }
-
-    [ExcludeFromCodeCoverage(
-        Justification = "Handles cleanup during timeout scenarios. Testing timeout with process termination and async output gathering is difficult to reliably reproduce."
-    )]
-    private static async Task HandleTimeoutAsync(
+    private static async Task HandleProcessCleanupAsync(
         Process process,
         Task<string> outputTask,
         Task<string> errorTask

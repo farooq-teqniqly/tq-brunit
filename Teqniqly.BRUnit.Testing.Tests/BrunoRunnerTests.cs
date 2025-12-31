@@ -223,20 +223,18 @@ public class BrunoRunnerTests
         finally
         {
             // Cleanup
-            if (hangingProcess != null)
+            try
             {
-                try
-                {
-                    hangingProcess.Kill(entireProcessTree: true);
-                    hangingProcess.Dispose();
-                }
-#pragma warning disable CA1031 // Do not catch general exception types
-                catch
-#pragma warning restore CA1031
-                {
-                    // Ignore cleanup errors
-                }
+                hangingProcess?.Kill(entireProcessTree: true);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch
+#pragma warning restore CA1031
+            {
+                // Ignore cleanup errors
+            }
+
+            hangingProcess?.Dispose();
         }
     }
 
@@ -293,20 +291,18 @@ public class BrunoRunnerTests
         finally
         {
             // Cleanup
-            if (hangingProcess != null)
+            try
             {
-                try
-                {
-                    hangingProcess.Kill(entireProcessTree: true);
-                    hangingProcess.Dispose();
-                }
-#pragma warning disable CA1031 // Do not catch general exception types
-                catch
-#pragma warning restore CA1031
-                {
-                    // Ignore cleanup errors
-                }
+                hangingProcess?.Kill(entireProcessTree: true);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch
+#pragma warning restore CA1031
+            {
+                // Ignore cleanup errors
+            }
+
+            hangingProcess?.Dispose();
         }
     }
 
@@ -352,8 +348,8 @@ public class BrunoRunnerTests
             // Verify process was killed
             try
             {
-                hangingProcess.Refresh();
-                Assert.True(hangingProcess.HasExited, "Process should have been killed");
+                hangingProcess?.Refresh();
+                Assert.True(hangingProcess?.HasExited ?? false, "Process should have been killed");
             }
             catch (InvalidOperationException)
             {
@@ -362,20 +358,19 @@ public class BrunoRunnerTests
         }
         finally
         {
-            if (hangingProcess != null)
+            // Cleanup
+            try
             {
-                try
-                {
-                    hangingProcess.Kill(entireProcessTree: true);
-                    hangingProcess.Dispose();
-                }
-#pragma warning disable CA1031 // Do not catch general exception types
-                catch
-#pragma warning restore CA1031
-                {
-                    // Ignore cleanup errors
-                }
+                hangingProcess?.Kill(entireProcessTree: true);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
+            catch
+#pragma warning restore CA1031
+            {
+                // Ignore cleanup errors
+            }
+
+            hangingProcess?.Dispose();
         }
     }
 
