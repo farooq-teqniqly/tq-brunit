@@ -11,6 +11,11 @@ public sealed record BrunoRunResult
     public int ExitCode { get; init; }
 
     /// <summary>
+    /// Indicates whether the Bruno execution was successful (exit code 0).
+    /// </summary>
+    public bool IsSuccess => ExitCode == 0;
+
+    /// <summary>
     /// Standard error output from the Bruno process.
     /// </summary>
     public string StandardError { get; init; } = string.Empty;
