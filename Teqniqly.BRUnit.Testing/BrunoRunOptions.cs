@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Teqniqly.BRUnit.Testing;
 
 /// <summary>
@@ -17,10 +19,10 @@ public sealed record BrunoRunOptions
 
     /// <summary>
     /// Environment variables to pass to the Bruno process.
-    /// Keys are case-insensitive.
+    /// Keys are case-insensitive. The dictionary is immutable.
     /// </summary>
-    public IDictionary<string, string?> EnvironmentVariables { get; init; } =
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+    public ImmutableDictionary<string, string?> EnvironmentVariables { get; init; } =
+        ImmutableDictionary<string, string?>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Target .bru file or folder to execute. Required.

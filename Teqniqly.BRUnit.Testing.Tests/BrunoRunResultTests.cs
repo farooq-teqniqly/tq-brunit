@@ -41,7 +41,6 @@ public class BrunoRunResultTests
     [Fact]
     public void Equals_WithSameValues_ReturnsTrue()
     {
-        // Arrange
         var result1 = new BrunoRunResult
         {
             ExitCode = 0,
@@ -114,10 +113,8 @@ public class BrunoRunResultTests
     [InlineData(255, false)]
     public void IsSuccess_WithVariousExitCodes_ReturnsExpected(int exitCode, bool expectedIsSuccess)
     {
-        // Arrange
         var result = new BrunoRunResult { ExitCode = exitCode };
 
-        // Act & Assert
         Assert.Equal(expectedIsSuccess, result.IsSuccess);
     }
 }

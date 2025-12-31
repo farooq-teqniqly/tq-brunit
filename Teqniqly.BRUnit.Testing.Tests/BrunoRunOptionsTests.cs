@@ -1,3 +1,6 @@
+using System.Collections.Immutable;
+using Teqniqly.BRUnit.Testing;
+
 namespace Teqniqly.BRUnit.Testing.Tests;
 
 // Reference: Story AC: PBI-02 AC-40 (default values)
@@ -19,12 +22,14 @@ public class BrunoRunOptionsTests
         Assert.Null(options.EnvironmentName);
         Assert.Equal(TimeSpan.FromMinutes(2), options.Timeout);
         Assert.NotNull(options.EnvironmentVariables);
-        Assert.IsType<Dictionary<string, string?>>(options.EnvironmentVariables);
+        Assert.IsType<ImmutableDictionary<string, string?>>(options.EnvironmentVariables);
+        Assert.True(options.EnvironmentVariables.IsEmpty);
 
         // Verify case-insensitive comparer
-        options.EnvironmentVariables["TEST"] = "value1";
-        Assert.Equal("value1", options.EnvironmentVariables["test"]);
-        Assert.Equal("value1", options.EnvironmentVariables["TEST"]);
+        var envVarsWithValue = options.EnvironmentVariables.SetItem("TEST", "value1");
+        Assert.Equal("value1", envVarsWithValue["test"]);
+        Assert.Equal("value1", envVarsWithValue["TEST"]);
+        Assert.True(options.EnvironmentVariables.IsEmpty);
     }
 
     // Note: Immutability (AC-44) is enforced at compile-time by the record type and init-only accessors.
@@ -38,19 +43,17 @@ public class BrunoRunOptionsTests
         var options1 = new BrunoRunOptions
         {
             Target = "test.bru",
-            EnvironmentVariables = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["KEY1"] = "value1",
-            },
+            EnvironmentVariables = ImmutableDictionary<string, string?>
+                .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+                .SetItem("KEY1", "value1"),
         };
 
         var options2 = new BrunoRunOptions
         {
             Target = "test.bru",
-            EnvironmentVariables = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["KEY2"] = "value2",
-            },
+            EnvironmentVariables = ImmutableDictionary<string, string?>
+                .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+                .SetItem("KEY2", "value2"),
         };
 
         // Act & Assert
@@ -76,8 +79,9 @@ public class BrunoRunOptionsTests
     [Fact]
     public void Equals_WithSameValues_ReturnsTrue()
     {
-        // Use same dictionary instance for reference equality (records compare dictionaries by reference)
-        var envVars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var envVars = ImmutableDictionary<string, string?>
+            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+            .SetItem("KEY1", "value1");
         var options1 = new BrunoRunOptions
         {
             BruExecutablePath = "bru",
@@ -107,8 +111,9 @@ public class BrunoRunOptionsTests
     [Fact]
     public void GetHashCode_WithSameValues_ReturnsSameHash()
     {
-        // Use same dictionary instance for reference equality (records compare dictionaries by reference)
-        var envVars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var envVars = ImmutableDictionary<string, string?>
+            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+            .SetItem("KEY1", "value1");
         var options1 = new BrunoRunOptions
         {
             BruExecutablePath = "bru",

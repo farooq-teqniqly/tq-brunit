@@ -8,6 +8,8 @@
     <!-- Code Analysis -->
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.17.0.131074" />
+    <!-- Collections -->
+    <PackageVersion Include="System.Collections.Immutable" Version="9.0.0" />
     <!-- Test Packages (for test projects) -->
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
