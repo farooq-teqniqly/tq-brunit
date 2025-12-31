@@ -49,6 +49,41 @@ public class BrunoRunnerTests
         Assert.NotEmpty(result.StandardOutput);
         Assert.Matches(@"\d+\.\d+", result.StandardOutput);
     }
+
+    [Fact]
+    public async Task RunAsync_SetsWorkingDirectory()
+    {
+        // Arrange
+        var tempDir = Path.GetTempPath();
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "pwd",
+            Target = OperatingSystem.IsWindows() ? "/c cd" : string.Empty,
+            WorkingDirectory = tempDir,
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options);
+
+        // Assert
+        // Verify the process ran in the specified working directory
+        // On Windows, "cmd /c cd" outputs the current directory
+        // On Unix, "pwd" outputs the current directory
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Contains(
+                tempDir.TrimEnd('\\'),
+                result.StandardOutput,
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+        else
+        {
+            Assert.Equal(tempDir.TrimEnd('/'), result.StandardOutput.Trim());
+        }
+    }
+
     [Fact]
     public async Task RunAsync_WhenProcessFactoryThrows_PropagatesException()
     {
@@ -69,6 +104,45 @@ public class BrunoRunnerTests
         );
 
         Assert.Contains("nonexistent", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunAsync_WithCustomWorkingDirectory_PassesToProcessStartInfo()
+    {
+        // Arrange
+        var expectedWorkingDirectory = Path.GetTempPath();
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "dotnet",
+            Target = "--version",
+            WorkingDirectory = expectedWorkingDirectory,
+        };
+        var processFactory = Substitute.For<IProcessFactory>();
+        ProcessStartInfo? capturedStartInfo = null;
+        processFactory
+            .Start(Arg.Any<ProcessStartInfo>())
+            .Returns(callInfo =>
+            {
+                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
+                // Return a real process that will complete quickly
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+                return Process.Start(startInfo)!;
+            });
+        var runner = new BrunoRunner(processFactory);
+
+        // Act
+        await runner.RunAsync(options);
+
+        // Assert
+        Assert.NotNull(capturedStartInfo);
+        Assert.Equal(expectedWorkingDirectory, capturedStartInfo.WorkingDirectory);
     }
 
     [Fact]
@@ -143,5 +217,4 @@ public class BrunoRunnerTests
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
-
 }

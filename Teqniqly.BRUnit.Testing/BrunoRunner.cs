@@ -53,6 +53,7 @@ public sealed class BrunoRunner : IBrunoRunner
         {
             FileName = options.BruExecutablePath,
             Arguments = options.Target,
+            WorkingDirectory = options.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
