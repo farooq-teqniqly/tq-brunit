@@ -15,18 +15,27 @@ public class ProcessFactoryTests
         var startInfo = new ProcessStartInfo
         {
             FileName = "nonexistent-executable-that-does-not-exist-12345",
-            Arguments = string.Empty,
+            Arguments = "--test-arg",
+            WorkingDirectory = @"C:\test\directory",
             UseShellExecute = false,
             CreateNoWindow = true,
         };
 
         // Act & Assert
         var exception = Assert.Throws<InvalidOperationException>(() => factory.Start(startInfo));
+        var message = exception.Message;
         Assert.Contains(
-            "nonexistent-executable-that-does-not-exist-12345",
-            exception.Message,
+            "FileName='nonexistent-executable-that-does-not-exist-12345'",
+            message,
             StringComparison.Ordinal
         );
+        Assert.Contains("Arguments='--test-arg'", message, StringComparison.Ordinal);
+        Assert.Contains(
+            "WorkingDirectory='C:\\test\\directory'",
+            message,
+            StringComparison.Ordinal
+        );
+        Assert.NotNull(exception.InnerException);
     }
 
     [Fact]
@@ -53,10 +62,9 @@ public class ProcessFactoryTests
         };
 
         // Act
-        var process = factory.Start(startInfo);
+        using var process = factory.Start(startInfo);
 
         // Assert
         Assert.NotNull(process);
-        process.Dispose();
     }
 }

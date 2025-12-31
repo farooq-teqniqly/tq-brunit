@@ -28,6 +28,19 @@ public sealed class BrunoRunner : IBrunoRunner
     {
         ArgumentNullException.ThrowIfNull(options);
 
+        if (string.IsNullOrWhiteSpace(options.BruExecutablePath))
+        {
+            throw new ArgumentException(
+                "BruExecutablePath cannot be null or empty.",
+                nameof(options)
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Target))
+        {
+            throw new ArgumentException("Target cannot be null or empty.", nameof(options));
+        }
+
         var startInfo = new ProcessStartInfo
         {
             FileName = options.BruExecutablePath,

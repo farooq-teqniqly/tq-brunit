@@ -38,6 +38,30 @@ public class BrunoRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_WithEmptyBruExecutablePath_ThrowsArgumentException()
+    {
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = string.Empty, Target = "test" };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
+        Assert.Contains("BruExecutablePath", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunAsync_WithEmptyTarget_ThrowsArgumentException()
+    {
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = string.Empty };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
+        Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RunAsync_WithNullOptions_ThrowsArgumentNullException()
     {
         // Arrange
@@ -60,5 +84,29 @@ public class BrunoRunnerTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.ExitCode);
+    }
+
+    [Fact]
+    public async Task RunAsync_WithWhitespaceBruExecutablePath_ThrowsArgumentException()
+    {
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "   ", Target = "test" };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
+        Assert.Contains("BruExecutablePath", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunAsync_WithWhitespaceTarget_ThrowsArgumentException()
+    {
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "   " };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
+        Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
 }
