@@ -29,23 +29,7 @@ public class BrunoRunnerTests
             Target = "test.bru",
             EnvironmentName = "production",
         };
-        var (processFactory, runner) = SetupProcessFactoryMock();
-        var capturedStartInfo = new List<ProcessStartInfo>();
-        processFactory
-            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
-            .Returns(callInfo =>
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var realProcessFactory = new ProcessFactory();
-                return realProcessFactory.Start(startInfo);
-            });
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
@@ -65,23 +49,7 @@ public class BrunoRunnerTests
     {
         // Arrange
         var options = new BrunoRunOptions { BruExecutablePath = "dotnet", Target = "test.bru" };
-        var (processFactory, runner) = SetupProcessFactoryMock();
-        var capturedStartInfo = new List<ProcessStartInfo>();
-        processFactory
-            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
-            .Returns(callInfo =>
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var realProcessFactory = new ProcessFactory();
-                return realProcessFactory.Start(startInfo);
-            });
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
@@ -144,23 +112,7 @@ public class BrunoRunnerTests
             Target = "test folder/test file.bru",
             EnvironmentName = "my environment",
         };
-        var (processFactory, runner) = SetupProcessFactoryMock();
-        var capturedStartInfo = new List<ProcessStartInfo>();
-        processFactory
-            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
-            .Returns(callInfo =>
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var realProcessFactory = new ProcessFactory();
-                return realProcessFactory.Start(startInfo);
-            });
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
@@ -320,23 +272,7 @@ public class BrunoRunnerTests
             Target = "--version",
             WorkingDirectory = expectedWorkingDirectory,
         };
-        var (processFactory, runner) = SetupProcessFactoryMock();
-        var capturedStartInfo = new List<ProcessStartInfo>();
-        processFactory
-            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
-            .Returns(callInfo =>
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var realProcessFactory = new ProcessFactory();
-                return realProcessFactory.Start(startInfo);
-            });
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
@@ -430,23 +366,7 @@ public class BrunoRunnerTests
             Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var (processFactory, runner) = SetupProcessFactoryMock();
-        var capturedStartInfo = new List<ProcessStartInfo>();
-        processFactory
-            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
-            .Returns(callInfo =>
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var realProcessFactory = new ProcessFactory();
-                return realProcessFactory.Start(startInfo);
-            });
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
@@ -472,23 +392,7 @@ public class BrunoRunnerTests
             Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var (processFactory, runner) = SetupProcessFactoryMock();
-        var capturedStartInfo = new List<ProcessStartInfo>();
-        processFactory
-            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
-            .Returns(callInfo =>
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var realProcessFactory = new ProcessFactory();
-                return realProcessFactory.Start(startInfo);
-            });
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
@@ -688,11 +592,16 @@ public class BrunoRunnerTests
         return null;
     }
 
-    private static (IProcessFactory processFactory, BrunoRunner runner) SetupProcessFactoryMock()
+    private static (
+        IProcessFactory processFactory,
+        BrunoRunner runner,
+        List<ProcessStartInfo> capturedStartInfo
+    ) SetupProcessFactoryMock()
     {
         var processFactory = Substitute.For<IProcessFactory>();
+        List<ProcessStartInfo> capturedStartInfo = [];
         processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
+            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
             .Returns(callInfo =>
             {
                 var startInfo = new ProcessStartInfo
@@ -707,7 +616,7 @@ public class BrunoRunnerTests
                 return realProcessFactory.Start(startInfo);
             });
         var runner = new BrunoRunner(processFactory);
-        return (processFactory, runner);
+        return (processFactory, runner, capturedStartInfo);
     }
 
     private static (
