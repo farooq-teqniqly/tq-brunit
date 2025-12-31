@@ -415,23 +415,21 @@ public class BrunoRunnerTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => runner.RunAsync(null!));
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RunAsync_WithRealBrunoCli_ExecutesSuccessfully()
     {
         // Arrange
-        if (!IsBrunoCliAvailable())
-        {
-            return;
-        }
+        var bruPath = FindBrunoCliPath();
+        Skip.If(string.IsNullOrEmpty(bruPath), "Bruno CLI not available");
 
         // Use bru run -h to get help output (this is a simple command that will succeed)
         // Note: For a real integration test with actual test execution,
         // you would need an actual .bru file or collection folder
-        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "-h" };
+        var options = new BrunoRunOptions { BruExecutablePath = bruPath, Target = "-h" };
         var runner = new BrunoRunner(new ProcessFactory());
 
         // Act
-        var result = await runner.RunAsync(options);
+        var result = await runner.RunAsync(options).ConfigureAwait(false);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -483,14 +481,40 @@ public class BrunoRunnerTests
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
 
-    private static bool IsBrunoCliAvailable()
+    private static string? FindBrunoCliPath()
+    {
+        // Try to find bru executable
+        // On Windows, npm global binaries are often in AppData\Roaming\npm, which may not be
+        // in the PATH for test processes. Try common locations first, then fall back to PATH.
+        var bruPaths = new List<string>();
+
+        if (OperatingSystem.IsWindows())
+        {
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            bruPaths.Add(Path.Combine(appData, "npm", "bru.cmd"));
+            bruPaths.Add(Path.Combine(appData, "npm", "bru"));
+        }
+
+        bruPaths.Add("bru");
+
+        foreach (var bruPath in bruPaths)
+        {
+            if (TryRunBrunoVersion(bruPath))
+            {
+                return bruPath;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryRunBrunoVersion(string bruPath)
     {
         try
         {
-            // Try to run bru --version directly (not through BrunoRunner, as that always adds "run")
             var startInfo = new ProcessStartInfo
             {
-                FileName = "bru",
+                FileName = bruPath,
                 Arguments = "--version",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -507,11 +531,11 @@ public class BrunoRunnerTests
             return process.ExitCode == 0
                 || !string.IsNullOrEmpty(process.StandardOutput.ReadToEnd());
         }
-        catch (InvalidOperationException)
+        catch (System.ComponentModel.Win32Exception)
         {
             return false;
         }
-        catch (System.ComponentModel.Win32Exception)
+        catch (InvalidOperationException)
         {
             return false;
         }
