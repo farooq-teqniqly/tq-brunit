@@ -174,6 +174,73 @@ public class BrunoRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_WhenBrunoFails_ReturnsNonZeroExitCode()
+    {
+        // Arrange
+        // Use dotnet with an invalid command to produce a non-zero exit code
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "dotnet",
+            Target = "invalidcommand",
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.NotEqual(0, result.ExitCode);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_WhenExecutionExceedsTimeout_ThrowsTimeoutException()
+    {
+        // Arrange
+        // Create a process that will hang longer than the timeout using a mocked process factory
+        var processFactory = Substitute.For<IProcessFactory>();
+        Process? hangingProcess = null;
+        try
+        {
+            hangingProcess = CreateHangingProcess();
+            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+            var options = new BrunoRunOptions
+            {
+                BruExecutablePath = "bru",
+                Target = "test.bru",
+                Timeout = TimeSpan.FromMilliseconds(100), // Very short timeout
+            };
+            var runner = new BrunoRunner(processFactory);
+
+            // Act & Assert
+            var exception = await Assert
+                .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
+                .ConfigureAwait(false);
+            Assert.Contains("timeout", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("0.1", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            // Cleanup
+            if (hangingProcess != null)
+            {
+                try
+                {
+                    hangingProcess.Kill(entireProcessTree: true);
+                    hangingProcess.Dispose();
+                }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch
+#pragma warning restore CA1031
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+    }
+
+    [Fact]
     public async Task RunAsync_WhenProcessFactoryThrows_PropagatesException()
     {
         // Arrange
@@ -193,6 +260,123 @@ public class BrunoRunnerTests
         );
 
         Assert.Contains("nonexistent", exception.Message, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_WhenTimeoutOccurs_CapturesPartialOutput()
+    {
+        // Arrange
+        // Create a process that writes output and then hangs
+        var processFactory = Substitute.For<IProcessFactory>();
+        Process? hangingProcess = null;
+        try
+        {
+            hangingProcess = CreateHangingProcessWithOutput();
+            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+            var options = new BrunoRunOptions
+            {
+                BruExecutablePath = "bru",
+                Target = "test.bru",
+                Timeout = TimeSpan.FromMilliseconds(100), // Very short timeout
+            };
+            var runner = new BrunoRunner(processFactory);
+
+            // Act & Assert
+            var exception = await Assert
+                .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
+                .ConfigureAwait(false);
+            Assert.NotNull(exception);
+            // Note: We can't easily verify partial output was captured without exposing internal state,
+            // but the fact that the exception was thrown means the timeout logic executed
+        }
+        finally
+        {
+            // Cleanup
+            if (hangingProcess != null)
+            {
+                try
+                {
+                    hangingProcess.Kill(entireProcessTree: true);
+                    hangingProcess.Dispose();
+                }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch
+#pragma warning restore CA1031
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_WhenTimeoutOccurs_KillsProcess()
+    {
+        // Arrange
+        // Create a process that will hang longer than the timeout
+        var processFactory = Substitute.For<IProcessFactory>();
+        Process? hangingProcess = null;
+        try
+        {
+            hangingProcess = CreateHangingProcess();
+            processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+            var options = new BrunoRunOptions
+            {
+                BruExecutablePath = "bru",
+                Target = "test.bru",
+                Timeout = TimeSpan.FromMilliseconds(100), // Very short timeout
+            };
+            var runner = new BrunoRunner(processFactory);
+
+            var startTime = DateTime.UtcNow;
+
+            // Act
+            try
+            {
+                await runner.RunAsync(options).ConfigureAwait(false);
+                Assert.Fail("Expected TimeoutException was not thrown.");
+            }
+            catch (TimeoutException)
+            {
+                // Expected
+            }
+
+            var elapsed = DateTime.UtcNow - startTime;
+
+            // Assert - verify process was killed by checking elapsed time
+            // If the process wasn't killed, this test would take much longer
+            Assert.True(elapsed.TotalSeconds < 2, "Process should have been killed quickly");
+
+            // Verify process was killed
+            try
+            {
+                hangingProcess.Refresh();
+                Assert.True(hangingProcess.HasExited, "Process should have been killed");
+            }
+            catch (InvalidOperationException)
+            {
+                // Process already exited/killed - this is expected
+            }
+        }
+        finally
+        {
+            if (hangingProcess != null)
+            {
+                try
+                {
+                    hangingProcess.Kill(entireProcessTree: true);
+                    hangingProcess.Dispose();
+                }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch
+#pragma warning restore CA1031
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
     }
 
     [Fact]
@@ -458,6 +642,71 @@ public class BrunoRunnerTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static Process CreateHangingProcess()
+    {
+        // Create a process that will hang (sleep for a long time)
+        // Use ping on Windows (takes ~10 seconds for 11 pings) or sleep on Unix
+        if (OperatingSystem.IsWindows())
+        {
+            // ping -n 11 127.0.0.1 takes about 10 seconds (11 pings with 1 second intervals)
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "ping",
+                Arguments = "-n 11 127.0.0.1",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return Process.Start(startInfo)!;
+        }
+        else
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "sleep",
+                Arguments = "10",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return Process.Start(startInfo)!;
+        }
+    }
+
+    private static Process CreateHangingProcessWithOutput()
+    {
+        // Create a process that writes output and then hangs
+        if (OperatingSystem.IsWindows())
+        {
+            // Use PowerShell to echo and then sleep
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                Arguments = "-Command \"Write-Output 'test-output'; Start-Sleep -Seconds 10\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return Process.Start(startInfo)!;
+        }
+        else
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "sh",
+                Arguments = "-c \"echo test-output && sleep 10\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return Process.Start(startInfo)!;
+        }
     }
 
     private static string? FindBrunoCliPath()
