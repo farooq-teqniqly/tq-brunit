@@ -23,6 +23,69 @@ public class BrunoRunResultTests
         Assert.Equal("error text", result.StandardError);
     }
 
+    [Fact]
+    public void Equals_WithDifferentValues_ReturnsFalse()
+    {
+        // Arrange
+        var result1 = new BrunoRunResult { ExitCode = 0, StandardOutput = "output1" };
+        var result2 = new BrunoRunResult { ExitCode = 1, StandardOutput = "output2" };
+
+        // Act & Assert
+        Assert.NotEqual(result1, result2);
+        Assert.False(result1 == result2);
+        Assert.True(result1 != result2);
+    }
+
+    // Reference: Story AC: PBI-02 AC-48 (value equality)
+    // Reference: Proposal: Section 5 (Contracts - BrunoRunResult)
+    [Fact]
+    public void Equals_WithSameValues_ReturnsTrue()
+    {
+        // Arrange
+        var result1 = new BrunoRunResult
+        {
+            ExitCode = 0,
+            StandardOutput = "output",
+            StandardError = "error",
+        };
+
+        var result2 = new BrunoRunResult
+        {
+            ExitCode = 0,
+            StandardOutput = "output",
+            StandardError = "error",
+        };
+
+        // Act & Assert
+        Assert.Equal(result1, result2);
+        Assert.True(result1 == result2);
+        Assert.False(result1 != result2);
+    }
+
+    // Note: Immutability (AC-44) is enforced at compile-time by the record type and init-only accessors.
+    // The compiler prevents assignment after object initialization, so runtime tests are not needed.
+    [Fact]
+    public void GetHashCode_WithSameValues_ReturnsSameHash()
+    {
+        // Arrange
+        var result1 = new BrunoRunResult
+        {
+            ExitCode = 0,
+            StandardOutput = "output",
+            StandardError = "error",
+        };
+
+        var result2 = new BrunoRunResult
+        {
+            ExitCode = 0,
+            StandardOutput = "output",
+            StandardError = "error",
+        };
+
+        // Act & Assert
+        Assert.Equal(result1.GetHashCode(), result2.GetHashCode());
+    }
+
     // Reference: Story AC: PBI-02 AC-42, AC-43 (IsSuccess logic)
     // Reference: Proposal: Section 5 (Contracts - BrunoRunResult)
     [Fact]
