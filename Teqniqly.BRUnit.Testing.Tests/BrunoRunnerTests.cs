@@ -174,49 +174,6 @@ public class BrunoRunnerTests
     }
 
     [Fact]
-    public async Task RunAsync_PassesEnvironmentVariables()
-    {
-        // Arrange
-        var envVars = ImmutableDictionary<string, string?>
-            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
-            .Add("TEST_VAR_1", "value1")
-            .Add("TEST_VAR_2", "value2");
-
-        var options = new BrunoRunOptions
-        {
-            BruExecutablePath = "dotnet",
-            Target = "--version",
-            EnvironmentVariables = envVars,
-        };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
-
-        // Act
-        await runner.RunAsync(options);
-
-        // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal("value1", capturedStartInfo.Environment["TEST_VAR_1"]);
-        Assert.Equal("value2", capturedStartInfo.Environment["TEST_VAR_2"]);
-    }
-
-    [Fact]
     public async Task RunAsync_WhenProcessFactoryThrows_PropagatesException()
     {
         // Arrange
@@ -336,20 +293,27 @@ public class BrunoRunnerTests
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task RunAsync_WithEnvironmentVariables_PassesToProcessStartInfo()
+    [Theory]
+    [InlineData("TEST_VAR_1", "value1", "TEST_VAR_2", "value2")]
+    [InlineData("CUSTOM_VAR", "custom_value", "ANOTHER_VAR", "another_value")]
+    public async Task RunAsync_WithEnvironmentVariables_PassesToProcessStartInfo(
+        string var1Name,
+        string var1Value,
+        string var2Name,
+        string var2Value
+    )
     {
         // Arrange
-        var expectedEnvVars = ImmutableDictionary<string, string?>
+        var envVars = ImmutableDictionary<string, string?>
             .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
-            .Add("CUSTOM_VAR", "custom_value")
-            .Add("ANOTHER_VAR", "another_value");
+            .Add(var1Name, var1Value)
+            .Add(var2Name, var2Value);
 
         var options = new BrunoRunOptions
         {
             BruExecutablePath = "dotnet",
             Target = "--version",
-            EnvironmentVariables = expectedEnvVars,
+            EnvironmentVariables = envVars,
         };
         var processFactory = Substitute.For<IProcessFactory>();
         ProcessStartInfo? capturedStartInfo = null;
@@ -375,8 +339,8 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotNull(capturedStartInfo);
-        Assert.Equal("custom_value", capturedStartInfo.Environment["CUSTOM_VAR"]);
-        Assert.Equal("another_value", capturedStartInfo.Environment["ANOTHER_VAR"]);
+        Assert.Equal(var1Value, capturedStartInfo.Environment[var1Name]);
+        Assert.Equal(var2Value, capturedStartInfo.Environment[var2Name]);
     }
 
     [Fact]
