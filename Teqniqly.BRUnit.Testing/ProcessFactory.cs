@@ -38,9 +38,10 @@ public sealed class ProcessFactory : IProcessFactory
     {
         var message = $"Failed to start process: FileName='{startInfo.FileName}'";
 
-        if (!string.IsNullOrWhiteSpace(startInfo.Arguments))
+        var arguments = GetArgumentsString(startInfo);
+        if (!string.IsNullOrWhiteSpace(arguments))
         {
-            message += $", Arguments='{startInfo.Arguments}'";
+            message += $", Arguments='{arguments}'";
         }
 
         if (!string.IsNullOrWhiteSpace(startInfo.WorkingDirectory))
@@ -49,5 +50,17 @@ public sealed class ProcessFactory : IProcessFactory
         }
 
         return message;
+    }
+
+    private static string GetArgumentsString(ProcessStartInfo startInfo)
+    {
+        // Prefer ArgumentList if it has items, as it's more explicit
+        if (startInfo.ArgumentList.Count > 0)
+        {
+            return string.Join(" ", startInfo.ArgumentList);
+        }
+
+        // Fall back to Arguments property
+        return startInfo.Arguments ?? string.Empty;
     }
 }
