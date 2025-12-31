@@ -463,6 +463,38 @@ public class BrunoRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_WithRealBrunoCli_ExecutesSuccessfully()
+    {
+        // Arrange
+        // Check if Bruno CLI is available by trying to run it directly
+        if (!IsBrunoCliAvailable())
+        {
+            // Skip test if Bruno CLI is not available
+            return;
+        }
+
+        // Use bru run -h to get help output (this is a simple command that will succeed)
+        // Note: For a real integration test with actual test execution,
+        // you would need an actual .bru file or collection folder
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "bru",
+            Target = "-h", // Bruno will interpret this as a help flag
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options);
+
+        // Assert
+        // Bruno should return success (exit code 0) and show help text
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.ExitCode);
+        // Help output should contain information about the run command
+        Assert.NotEmpty(result.StandardOutput);
+    }
+
+    [Fact]
     public async Task RunAsync_WithValidOptions_ExecutesProcessSuccessfully()
     {
         // Arrange
@@ -504,5 +536,50 @@ public class BrunoRunnerTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static bool IsBrunoCliAvailable()
+    {
+        try
+        {
+            // Try to run bru --version directly (not through BrunoRunner, as that always adds "run")
+            // to check if Bruno CLI is available
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "bru",
+                Arguments = "--version",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                return false;
+            }
+
+            process.WaitForExit();
+            // If we get here without exception, Bruno CLI is available
+            return process.ExitCode == 0
+                || !string.IsNullOrEmpty(process.StandardOutput.ReadToEnd());
+        }
+        catch (InvalidOperationException)
+        {
+            // Process could not be started (executable not found)
+            return false;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // Executable not found (Windows-specific)
+            return false;
+        }
+#pragma warning disable CA1031 // Do not catch general exception types
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            // Any other exception indicates Bruno CLI is not available
+            return false;
+        }
     }
 }
