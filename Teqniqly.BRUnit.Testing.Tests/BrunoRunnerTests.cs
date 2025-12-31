@@ -19,11 +19,11 @@ public class BrunoRunnerTests
     public async Task RunAsync_CapturesStandardError()
     {
         // Arrange
-        // Use a command that writes to stderr. On Windows, we can use cmd to redirect output.
+        // Use dotnet with an invalid command to produce stderr output
         var options = new BrunoRunOptions
         {
-            BruExecutablePath = "cmd",
-            Target = "/c echo error output >&2",
+            BruExecutablePath = "dotnet",
+            Target = "invalidcommand",
         };
         var runner = new BrunoRunner(new ProcessFactory());
 
@@ -31,8 +31,8 @@ public class BrunoRunnerTests
         var result = await runner.RunAsync(options);
 
         // Assert
-        // Note: The exact output may vary, but we verify that stderr capture is working
         Assert.NotNull(result.StandardError);
+        Assert.NotEmpty(result.StandardError);
     }
 
     [Fact]
@@ -47,9 +47,8 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotEmpty(result.StandardOutput);
-        Assert.Contains("10.", result.StandardOutput, StringComparison.Ordinal);
+        Assert.Matches(@"\d+\.\d+", result.StandardOutput);
     }
-
     [Fact]
     public async Task RunAsync_WhenProcessFactoryThrows_PropagatesException()
     {
@@ -144,4 +143,5 @@ public class BrunoRunnerTests
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
+
 }

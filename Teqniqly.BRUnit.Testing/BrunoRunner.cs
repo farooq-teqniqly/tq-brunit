@@ -58,7 +58,43 @@ public sealed class BrunoRunner : IBrunoRunner
             var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
             var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
 
-            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // When cancellation is requested during process execution, we need to ensure proper cleanup:
+                // 1. Kill the process (and its entire process tree) to prevent it from continuing to run
+                // 2. Wait for the process to actually terminate (using CancellationToken.None to avoid
+                //    another cancellation exception)
+                // 3. Gather any output/error that was captured before cancellation occurred
+                // 4. Rethrow the OperationCanceledException to preserve cancellation semantics for the caller
+                //
+                // Note: The Kill operation is wrapped in a try-catch because the process may have already
+                // exited by the time we attempt to kill it, which would throw an exception. We ignore such
+                // exceptions as they don't affect the cleanup process.
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch (Exception)
+#pragma warning restore CA1031
+                {
+                    // Ignore errors when killing the process (e.g., already exited)
+                }
+
+                // Wait for process to terminate without cancellation token
+                await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+
+                // Gather output/error that was captured before cancellation
+                await outputTask.ConfigureAwait(false);
+                await errorTask.ConfigureAwait(false);
+
+                // Rethrow to preserve cancellation
+                throw;
+            }
 
             var output = await outputTask.ConfigureAwait(false);
             var error = await errorTask.ConfigureAwait(false);
