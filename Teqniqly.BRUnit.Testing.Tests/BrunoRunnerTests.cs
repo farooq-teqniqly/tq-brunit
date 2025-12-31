@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using NSubstitute;
 
@@ -48,6 +49,34 @@ public class BrunoRunnerTests
         // Assert
         Assert.NotEmpty(result.StandardOutput);
         Assert.Matches(@"\d+\.\d+", result.StandardOutput);
+    }
+
+    [Fact]
+    public async Task RunAsync_PassesEnvironmentVariables()
+    {
+        // Arrange
+        var envVars = ImmutableDictionary<string, string?>
+            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+            .Add("TEST_VAR_1", "value1")
+            .Add("TEST_VAR_2", "value2");
+
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "sh",
+            Target = OperatingSystem.IsWindows()
+                ? "/c echo %TEST_VAR_1% %TEST_VAR_2%"
+                : "-c \"echo $TEST_VAR_1 $TEST_VAR_2\"",
+            EnvironmentVariables = envVars,
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Contains("value1", result.StandardOutput, StringComparison.Ordinal);
+        Assert.Contains("value2", result.StandardOutput, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -158,6 +187,27 @@ public class BrunoRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_WithEmptyEnvironmentVariables_DoesNotThrow()
+    {
+        // Arrange
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "dotnet",
+            Target = "--version",
+            EnvironmentVariables = ImmutableDictionary<string, string?>.Empty.WithComparers(
+                StringComparer.OrdinalIgnoreCase
+            ),
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+    }
+
+    [Fact]
     public async Task RunAsync_WithEmptyTarget_ThrowsArgumentException()
     {
         // Arrange
@@ -167,6 +217,50 @@ public class BrunoRunnerTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunAsync_WithEnvironmentVariables_PassesToProcessStartInfo()
+    {
+        // Arrange
+        var expectedEnvVars = ImmutableDictionary<string, string?>
+            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+            .Add("CUSTOM_VAR", "custom_value")
+            .Add("ANOTHER_VAR", "another_value");
+
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "dotnet",
+            Target = "--version",
+            EnvironmentVariables = expectedEnvVars,
+        };
+        var processFactory = Substitute.For<IProcessFactory>();
+        ProcessStartInfo? capturedStartInfo = null;
+        processFactory
+            .Start(Arg.Any<ProcessStartInfo>())
+            .Returns(callInfo =>
+            {
+                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
+                // Return a real process that will complete quickly
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+                return Process.Start(startInfo)!;
+            });
+        var runner = new BrunoRunner(processFactory);
+
+        // Act
+        await runner.RunAsync(options);
+
+        // Assert
+        Assert.NotNull(capturedStartInfo);
+        Assert.Equal("custom_value", capturedStartInfo.Environment["CUSTOM_VAR"]);
+        Assert.Equal("another_value", capturedStartInfo.Environment["ANOTHER_VAR"]);
     }
 
     [Fact]

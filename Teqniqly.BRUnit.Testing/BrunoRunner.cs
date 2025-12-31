@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Teqniqly.BRUnit.Testing;
@@ -49,7 +50,7 @@ public sealed class BrunoRunner : IBrunoRunner
 
     private static ProcessStartInfo CreateProcessStartInfo(BrunoRunOptions options)
     {
-        return new ProcessStartInfo
+        var startInfo = new ProcessStartInfo
         {
             FileName = options.BruExecutablePath,
             Arguments = options.Target,
@@ -59,6 +60,11 @@ public sealed class BrunoRunner : IBrunoRunner
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+
+        // Add environment variables from options
+        SetEnvironmentVariables(startInfo, options.EnvironmentVariables);
+
+        return startInfo;
     }
 
     private static async Task<BrunoRunResult> ExecuteProcessAndCaptureOutput(
@@ -136,6 +142,17 @@ public sealed class BrunoRunner : IBrunoRunner
 #pragma warning restore CA1031
         {
             // Ignore errors when killing the process (e.g., already exited)
+        }
+    }
+
+    private static void SetEnvironmentVariables(
+        ProcessStartInfo startInfo,
+        ImmutableDictionary<string, string?> environmentVariables
+    )
+    {
+        foreach (var (key, value) in environmentVariables)
+        {
+            startInfo.Environment[key] = value ?? string.Empty;
         }
     }
 
