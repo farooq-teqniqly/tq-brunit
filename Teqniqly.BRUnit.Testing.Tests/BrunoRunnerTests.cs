@@ -51,7 +51,11 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotNull(capturedStartInfo);
-        Assert.Equal("run --env production test.bru", capturedStartInfo.Arguments);
+        Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
+        Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
+        Assert.Equal("production", capturedStartInfo.ArgumentList[2]);
+        Assert.Equal("test.bru", capturedStartInfo.ArgumentList[3]);
     }
 
     [Fact]
@@ -84,7 +88,9 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotNull(capturedStartInfo);
-        Assert.Equal("run test.bru", capturedStartInfo.Arguments);
+        Assert.Equal(2, capturedStartInfo.ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
+        Assert.Equal("test.bru", capturedStartInfo.ArgumentList[1]);
     }
 
     [Fact]
@@ -163,15 +169,12 @@ public class BrunoRunnerTests
 
         // Assert
         Assert.NotNull(capturedStartInfo);
-        // Arguments should be escaped: "run" "--env" "my environment" "test folder/test file.bru"
-        Assert.Contains("run", capturedStartInfo.Arguments, StringComparison.Ordinal);
-        Assert.Contains("--env", capturedStartInfo.Arguments, StringComparison.Ordinal);
-        Assert.Contains("my environment", capturedStartInfo.Arguments, StringComparison.Ordinal);
-        Assert.Contains(
-            "test folder/test file.bru",
-            capturedStartInfo.Arguments,
-            StringComparison.Ordinal
-        );
+        // Arguments should be in ArgumentList (runtime handles escaping)
+        Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
+        Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
+        Assert.Equal("my environment", capturedStartInfo.ArgumentList[2]);
+        Assert.Equal("test folder/test file.bru", capturedStartInfo.ArgumentList[3]);
     }
 
     [Fact]
