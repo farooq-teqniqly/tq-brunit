@@ -264,6 +264,48 @@ public class BrunoRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_WithNullEnvironmentVariableValue_ConvertsToEmptyString()
+    {
+        // Arrange
+        var envVars = ImmutableDictionary<string, string?>
+            .Empty.WithComparers(StringComparer.OrdinalIgnoreCase)
+            .Add("NULL_VAR", null);
+
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "dotnet",
+            Target = "--version",
+            EnvironmentVariables = envVars,
+        };
+        var processFactory = Substitute.For<IProcessFactory>();
+        ProcessStartInfo? capturedStartInfo = null;
+        processFactory
+            .Start(Arg.Any<ProcessStartInfo>())
+            .Returns(callInfo =>
+            {
+                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
+                // Return a real process that will complete quickly
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+                return Process.Start(startInfo)!;
+            });
+        var runner = new BrunoRunner(processFactory);
+
+        // Act
+        await runner.RunAsync(options);
+
+        // Assert
+        Assert.NotNull(capturedStartInfo);
+        Assert.Equal(string.Empty, capturedStartInfo.Environment["NULL_VAR"]);
+    }
+
+    [Fact]
     public async Task RunAsync_WithNullOptions_ThrowsArgumentNullException()
     {
         // Arrange
