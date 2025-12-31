@@ -48,12 +48,29 @@ public sealed class BrunoRunner : IBrunoRunner
         }
     }
 
+    private static string BuildArguments(BrunoRunOptions options)
+    {
+        var args = new List<string> { "run" };
+
+        // Add --env flag if environment name is specified
+        if (!string.IsNullOrWhiteSpace(options.EnvironmentName))
+        {
+            args.Add("--env");
+            args.Add(options.EnvironmentName);
+        }
+
+        // Add target (file or folder) as the last argument
+        args.Add(options.Target);
+
+        return string.Join(" ", args.Select(arg => EscapeArgument(arg)));
+    }
+
     private static ProcessStartInfo CreateProcessStartInfo(BrunoRunOptions options)
     {
         var startInfo = new ProcessStartInfo
         {
             FileName = options.BruExecutablePath,
-            Arguments = options.Target,
+            Arguments = BuildArguments(options),
             WorkingDirectory = options.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -65,6 +82,16 @@ public sealed class BrunoRunner : IBrunoRunner
         SetEnvironmentVariables(startInfo, options.EnvironmentVariables);
 
         return startInfo;
+    }
+
+    private static string EscapeArgument(string argument)
+    {
+        // Escape arguments that contain spaces or special characters
+        if (argument.Contains(' ', StringComparison.Ordinal))
+        {
+            return $"\"{argument.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+        }
+        return argument;
     }
 
     private static async Task<BrunoRunResult> ExecuteProcessAndCaptureOutput(
