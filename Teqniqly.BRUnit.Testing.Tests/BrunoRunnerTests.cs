@@ -246,7 +246,7 @@ public class BrunoRunnerTests
         var processFactory = Substitute.For<IProcessFactory>();
         processFactory
             .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(x =>
+            .Returns(_ =>
                 throw new InvalidOperationException("Failed to start process: nonexistent")
             );
 
@@ -326,7 +326,7 @@ public class BrunoRunnerTests
         var processFactory = Substitute.For<IProcessFactory>();
         processFactory
             .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
+            .Returns(_ =>
             {
                 var startInfo = new ProcessStartInfo
                 {
