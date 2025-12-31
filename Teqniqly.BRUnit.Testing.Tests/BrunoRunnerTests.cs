@@ -182,73 +182,38 @@ public class BrunoRunnerTests
             .Add("TEST_VAR_1", "value1")
             .Add("TEST_VAR_2", "value2");
 
-        // Use a command that prints environment variables
-        // BrunoRunner always prepends "run", so we need a command that handles this
-        // On Linux: The challenge is that commands like "sh run -c ..." are invalid syntax
-        // Solution: Use '/usr/bin/env' with a command that will print environment variables
-        // The command becomes: /usr/bin/env run <target>
-        // Since 'env' will try to execute "run" as a command (which doesn't exist), it will fail
-        // But the environment variables are still set on the process, so we can check if they're passed
-        // Actually, we need a command that will actually execute and show the env vars
-        // Best solution: Use a command that accepts "run" as a valid first argument, or use a wrapper
-        // We'll use '/usr/bin/env' with 'printenv' to print all env vars, making "run" part of the command
-        // The command becomes: /usr/bin/env run printenv
-        // But env will try to execute "run" as a command.
-        // Final solution: Use a command that will work with "run" as the first argument
-        // Let's use '/usr/bin/env' with a command that prints env vars, accepting that "run" will fail
-        // and check if the env vars are in the error output or use a different verification method
         var options = new BrunoRunOptions
         {
-            BruExecutablePath = OperatingSystem.IsWindows() ? "cmd" : "/usr/bin/env",
-            Target = OperatingSystem.IsWindows() ? "/c echo %TEST_VAR_1% %TEST_VAR_2%" : "printenv", // /usr/bin/env run printenv - env will try to execute "run" as command, but printenv might still run
+            BruExecutablePath = "dotnet",
+            Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var runner = new BrunoRunner(new ProcessFactory());
+        var processFactory = Substitute.For<IProcessFactory>();
+        ProcessStartInfo? capturedStartInfo = null;
+        processFactory
+            .Start(Arg.Any<ProcessStartInfo>())
+            .Returns(callInfo =>
+            {
+                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+                return Process.Start(startInfo)!;
+            });
+        var runner = new BrunoRunner(processFactory);
 
         // Act
-        var result = await runner.RunAsync(options);
+        await runner.RunAsync(options);
 
         // Assert
-        // Note: On Linux, the command may fail (non-zero exit code) because "run" doesn't exist as a command
-        // But the environment variables should still be passed to the process and may appear in output/error
-        // We check both StandardOutput and StandardError for the values, and accept non-zero exit codes
-        var outputContainsValues =
-            (
-                result.StandardOutput.Contains("value1", StringComparison.Ordinal)
-                && result.StandardOutput.Contains("value2", StringComparison.Ordinal)
-            )
-            || (
-                result.StandardError.Contains("value1", StringComparison.Ordinal)
-                && result.StandardError.Contains("value2", StringComparison.Ordinal)
-            );
-
-        Assert.True(
-            result.IsSuccess || outputContainsValues,
-            $"Process failed with ExitCode: {result.ExitCode}. "
-                + $"StandardOutput: '{result.StandardOutput}'. "
-                + $"StandardError: '{result.StandardError}'. "
-                + $"Output contains value1: {result.StandardOutput.Contains("value1", StringComparison.Ordinal)}, "
-                + $"value2: {result.StandardOutput.Contains("value2", StringComparison.Ordinal)}. "
-                + $"Error contains value1: {result.StandardError.Contains("value1", StringComparison.Ordinal)}, "
-                + $"value2: {result.StandardError.Contains("value2", StringComparison.Ordinal)}"
-        );
-
-        // Check that at least one of output or error contains the values
-        var hasValue1 =
-            result.StandardOutput.Contains("value1", StringComparison.Ordinal)
-            || result.StandardError.Contains("value1", StringComparison.Ordinal);
-        var hasValue2 =
-            result.StandardOutput.Contains("value2", StringComparison.Ordinal)
-            || result.StandardError.Contains("value2", StringComparison.Ordinal);
-
-        Assert.True(
-            hasValue1,
-            $"Expected 'value1' in output or error. Output: '{result.StandardOutput}', Error: '{result.StandardError}'"
-        );
-        Assert.True(
-            hasValue2,
-            $"Expected 'value2' in output or error. Output: '{result.StandardOutput}', Error: '{result.StandardError}'"
-        );
+        Assert.NotNull(capturedStartInfo);
+        Assert.Equal("value1", capturedStartInfo.Environment["TEST_VAR_1"]);
+        Assert.Equal("value2", capturedStartInfo.Environment["TEST_VAR_2"]);
     }
 
     [Fact]
