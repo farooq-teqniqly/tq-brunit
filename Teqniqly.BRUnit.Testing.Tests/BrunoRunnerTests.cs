@@ -10,6 +10,7 @@ namespace Teqniqly.BRUnit.Testing.Tests;
 public class BrunoRunnerTests
 {
     private static readonly TimeSpan TimeoutForTesting = TimeSpan.FromMilliseconds(100);
+
     [Fact]
     public void Constructor_WithNullProcessFactory_ThrowsArgumentNullException()
     {
@@ -27,42 +28,18 @@ public class BrunoRunnerTests
             Target = "test.bru",
             EnvironmentName = "production",
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (capturedStartInfo, runner) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
-        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
-        Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
-        Assert.Equal("production", capturedStartInfo.ArgumentList[2]);
-        Assert.Equal("test.bru", capturedStartInfo.ArgumentList[3]);
+        Assert.NotNull(capturedStartInfo[0]);
+        Assert.Equal(4, capturedStartInfo[0]!.ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo[0]!.ArgumentList[0]);
+        Assert.Equal("--env", capturedStartInfo[0]!.ArgumentList[1]);
+        Assert.Equal("production", capturedStartInfo[0]!.ArgumentList[2]);
+        Assert.Equal("test.bru", capturedStartInfo[0]!.ArgumentList[3]);
     }
 
     [Fact]
@@ -70,40 +47,16 @@ public class BrunoRunnerTests
     {
         // Arrange
         var options = new BrunoRunOptions { BruExecutablePath = "dotnet", Target = "test.bru" };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (capturedStartInfo, runner) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(2, capturedStartInfo.ArgumentList.Count);
-        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
-        Assert.Equal("test.bru", capturedStartInfo.ArgumentList[1]);
+        Assert.NotNull(capturedStartInfo[0]);
+        Assert.Equal(2, capturedStartInfo[0]!.ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo[0]!.ArgumentList[0]);
+        Assert.Equal("test.bru", capturedStartInfo[0]!.ArgumentList[1]);
     }
 
     [Fact]
@@ -156,43 +109,19 @@ public class BrunoRunnerTests
             Target = "test folder/test file.bru",
             EnvironmentName = "my environment",
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (capturedStartInfo, runner) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
+        Assert.NotNull(capturedStartInfo[0]);
         // Arguments in ArgumentList (runtime handles escaping)
-        Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
-        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
-        Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
-        Assert.Equal("my environment", capturedStartInfo.ArgumentList[2]);
-        Assert.Equal("test folder/test file.bru", capturedStartInfo.ArgumentList[3]);
+        Assert.Equal(4, capturedStartInfo[0]!.ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo[0]!.ArgumentList[0]);
+        Assert.Equal("--env", capturedStartInfo[0]!.ArgumentList[1]);
+        Assert.Equal("my environment", capturedStartInfo[0]!.ArgumentList[2]);
+        Assert.Equal("test folder/test file.bru", capturedStartInfo[0]!.ArgumentList[3]);
     }
 
     [Fact]
@@ -307,7 +236,9 @@ public class BrunoRunnerTests
     public async Task RunAsync_WhenTimeoutOccurs_ThrowsTimeoutException_WithOutputGeneratingProcess()
     {
         // Arrange
-        var (hangingProcess, options, processFactory) = SetupTimeoutTest(CreateHangingProcessWithOutput);
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(
+            CreateHangingProcessWithOutput
+        );
         var runner = new BrunoRunner(processFactory);
 
         try
@@ -337,38 +268,14 @@ public class BrunoRunnerTests
             Target = "--version",
             WorkingDirectory = expectedWorkingDirectory,
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (capturedStartInfo, runner) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(expectedWorkingDirectory, capturedStartInfo.WorkingDirectory);
+        Assert.NotNull(capturedStartInfo[0]);
+        Assert.Equal(expectedWorkingDirectory, capturedStartInfo[0]!.WorkingDirectory);
     }
 
     [Fact]
@@ -408,14 +315,8 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
+                var processFactory = new ProcessFactory();
+                return processFactory.Start(startInfo);
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -460,39 +361,15 @@ public class BrunoRunnerTests
             Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (capturedStartInfo, runner) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(var1Value, capturedStartInfo.Environment[var1Name]);
-        Assert.Equal(var2Value, capturedStartInfo.Environment[var2Name]);
+        Assert.NotNull(capturedStartInfo[0]);
+        Assert.Equal(var1Value, capturedStartInfo[0]!.Environment[var1Name]);
+        Assert.Equal(var2Value, capturedStartInfo[0]!.Environment[var2Name]);
     }
 
     [Fact]
@@ -509,38 +386,14 @@ public class BrunoRunnerTests
             Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                var process = Process.Start(startInfo);
-                if (process == null)
-                {
-                    throw new InvalidOperationException(
-                        $"Failed to start process: FileName='{startInfo.FileName}', Arguments='{startInfo.Arguments}'"
-                    );
-                }
-                return process;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (capturedStartInfo, runner) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(string.Empty, capturedStartInfo.Environment["NULL_VAR"]);
+        Assert.NotNull(capturedStartInfo[0]);
+        Assert.Equal(string.Empty, capturedStartInfo[0]!.Environment["NULL_VAR"]);
     }
 
     [Fact]
@@ -617,24 +470,6 @@ public class BrunoRunnerTests
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => runner.RunAsync(options));
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
-    }
-
-    private static (Process hangingProcess, BrunoRunOptions options, IProcessFactory processFactory) SetupTimeoutTest(
-        Func<Process> createHangingProcess
-    )
-    {
-        var processFactory = Substitute.For<IProcessFactory>();
-        var hangingProcess = createHangingProcess();
-        processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
-
-        var options = new BrunoRunOptions
-        {
-            BruExecutablePath = "bru",
-            Target = "test.bru",
-            Timeout = TimeoutForTesting,
-        };
-
-        return (hangingProcess, options, processFactory);
     }
 
     private static void CleanupHangingProcess(Process? hangingProcess)
@@ -748,6 +583,53 @@ public class BrunoRunnerTests
         }
 
         return null;
+    }
+
+    private static (
+        ProcessStartInfo?[] capturedStartInfo,
+        BrunoRunner runner
+    ) SetupProcessFactoryMock()
+    {
+        var processFactory = Substitute.For<IProcessFactory>();
+        var capturedStartInfo = new ProcessStartInfo?[1];
+        processFactory
+            .Start(Arg.Any<ProcessStartInfo>())
+            .Returns(callInfo =>
+            {
+                capturedStartInfo[0] = callInfo.Arg<ProcessStartInfo>();
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+                var realProcessFactory = new ProcessFactory();
+                return realProcessFactory.Start(startInfo);
+            });
+        var runner = new BrunoRunner(processFactory);
+        return (capturedStartInfo, runner);
+    }
+
+    private static (
+        Process hangingProcess,
+        BrunoRunOptions options,
+        IProcessFactory processFactory
+    ) SetupTimeoutTest(Func<Process> createHangingProcess)
+    {
+        var processFactory = Substitute.For<IProcessFactory>();
+        var hangingProcess = createHangingProcess();
+        processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "bru",
+            Target = "test.bru",
+            Timeout = TimeoutForTesting,
+        };
+
+        return (hangingProcess, options, processFactory);
     }
 
     private static bool TryRunBrunoVersion(string bruPath)
