@@ -198,7 +198,12 @@ public class BrunoRunnerTests
         var result = await runner.RunAsync(options);
 
         // Assert
-        Assert.True(result.IsSuccess);
+        Assert.True(
+            result.IsSuccess,
+            $"Process failed with ExitCode: {result.ExitCode}. "
+                + $"StandardOutput: '{result.StandardOutput}'. "
+                + $"StandardError: '{result.StandardError}'"
+        );
         Assert.Contains("value1", result.StandardOutput, StringComparison.Ordinal);
         Assert.Contains("value2", result.StandardOutput, StringComparison.Ordinal);
     }
