@@ -105,21 +105,22 @@ var result = await runner.RunAsync(options);
 
 Pass environment variables to the Bruno process for dynamic configuration:
 
-```csharp
+````csharp
 using System.Collections.Immutable;
+
+var envVars = new Dictionary<string, string?>
+{
+    ["API_BASE_URL"] = "https://jsonplaceholder.typicode.com",
+    ["API_TIMEOUT"] = "5000"
+}.ToImmutableDictionary();
 
 var options = new BrunoRunOptions
 {
     Target = "api-tests.bru",
-    EnvironmentVariables = ImmutableDictionary<string, string?>
-        .Empty
-        .Add("API_BASE_URL", "https://jsonplaceholder.typicode.com")
-        .Add("API_TIMEOUT", "5000")
+    EnvironmentVariables = envVars
 };
 
 var result = await runner.RunAsync(options);
-```
-
 ### Custom Timeout
 
 Configure a custom timeout for long-running tests:
@@ -132,7 +133,7 @@ var options = new BrunoRunOptions
 };
 
 var result = await runner.RunAsync(options);
-```
+````
 
 ### Complete Example
 
