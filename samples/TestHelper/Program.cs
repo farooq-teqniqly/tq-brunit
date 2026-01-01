@@ -1,4 +1,4 @@
-﻿// Simple test helper that mimics Bruno CLI behavior for timeout testing
+// Simple test helper that mimics Bruno CLI behavior for timeout testing
 // Accepts arguments like Bruno CLI: "run <sleep-seconds>"
 // Usage: TestHelper.exe run <sleep-seconds> [exit-code]
 // Or: TestHelper.exe <sleep-seconds> [exit-code] (for direct invocation)
@@ -16,9 +16,7 @@ if (args.Length <= argIndex)
 {
     await Console.Error.WriteLineAsync("Usage: TestHelper.exe [run] <sleep-seconds> [exit-code]");
     Environment.Exit(1);
-    return;
 }
-
 if (!int.TryParse(args[argIndex], out sleepSeconds) || sleepSeconds < 0)
 {
     await Console.Error.WriteLineAsync($"Invalid sleep duration: {args[argIndex]}");

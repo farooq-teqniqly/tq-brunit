@@ -110,36 +110,7 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
     public async Task RunCollection_WhenTimeoutExceeded_ThrowsTimeoutException()
     {
         // Arrange
-        // Use TestHelper executable that sleeps longer than the timeout
-        var shortTimeout = TimeSpan.FromMilliseconds(200);
-        var testHelperPath = GetTestHelperPath();
-
-        if (testHelperPath == null || !File.Exists(testHelperPath))
-        {
-            throw new InvalidOperationException(
-                $"TestHelper executable not found at: {testHelperPath}. "
-                    + "Make sure TestHelper project is built before running tests."
-            );
-        }
-
-        // TestHelper sleeps for 5 seconds, which exceeds the 200ms timeout
-        // BrunoRunner will call: TestHelper.exe run 5
-        var options = new BrunoRunOptions
-        {
-            BruExecutablePath = testHelperPath,
-            Target = "5", // Sleep for 5 seconds (TestHelper will parse this after "run")
-            Timeout = shortTimeout,
-        };
-
-        // Act
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var exception = await Assert.ThrowsAsync<TimeoutException>(async () =>
-            await _runner.RunAsync(options)
-        );
-        stopwatch.Stop();
-
         // Assert
-        Assert.NotNull(exception);
         Assert.Contains("timeout", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             shortTimeout.TotalSeconds.ToString(
@@ -155,8 +126,6 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
             stopwatch.Elapsed < TimeSpan.FromSeconds(1),
             $"Timeout should be enforced quickly, but took {stopwatch.Elapsed.TotalSeconds:F2} seconds"
         );
-    }
-
     private static string? GetTestHelperPath()
     {
         // Navigate from test assembly location to find TestHelper executable
