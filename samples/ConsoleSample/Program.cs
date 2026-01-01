@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using Teqniqly.BRUnit.Testing;
 
 // This console sample demonstrates how to use Teqniqly.BRUnit.Testing
@@ -11,7 +11,7 @@ using Teqniqly.BRUnit.Testing;
 var runner = new BrunoRunner(new ProcessFactory());
 
 // Example 1: Basic usage with a Bruno collection
-var collectionPath = Path.Combine(Directory.GetCurrentDirectory(), "bruno-collection");
+var collectionPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "bruno-collection");
 var basicOptions = new BrunoRunOptions
 {
     Target = "requests", // Run requests folder
@@ -58,9 +58,9 @@ var envOptions = new BrunoRunOptions
 };
 
 Console.WriteLine("\nRunning with environment name...");
-try
-{
-    var envResult = await runner.RunAsync(envOptions).ConfigureAwait(false);
+var envResult = await runner.RunAsync(envOptions).ConfigureAwait(false);
+Console.WriteLine($"Result: {(envResult.IsSuccess ? "Success" : "Failed")}");
+
 // Example 3: Passing environment variables (process-level, not Bruno env vars)
 // Note: These are process environment variables, not Bruno environment variables.
 // Bruno environment variables are defined in environments/*.bru files.
@@ -69,22 +69,7 @@ var envVarOptions = new BrunoRunOptions
     Target = "requests", // Run requests folder
     EnvironmentName = "Local", // Still need Bruno environment for {{base_url}}
     EnvironmentVariables = ImmutableDictionary<string, string?>
-        .Empty
-        .Add("API_BASE_URL", "https://jsonplaceholder.typicode.com")
-        .Add("API_TIMEOUT", "5000"),
-    WorkingDirectory = collectionPath,
-};
-
-Console.WriteLine("\nRunning with environment variables...");
-try
-{
-    var envVarResult = await runner.RunAsync(envVarOptions).ConfigureAwait(false);
-    Console.WriteLine($"Result: {(envVarResult.IsSuccess ? "Success" : "Failed")}");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"❌ Example 3 failed: {ex.Message}");
-}
+        .Empty.Add("API_BASE_URL", "https://jsonplaceholder.typicode.com")
         .Add("API_TIMEOUT", "5000"),
     WorkingDirectory = collectionPath,
 };
@@ -103,14 +88,7 @@ var timeoutOptions = new BrunoRunOptions
 };
 
 Console.WriteLine("\nRunning with custom timeout...");
-try
-{
-    var timeoutResult = await runner.RunAsync(timeoutOptions).ConfigureAwait(false);
-    Console.WriteLine($"Result: {(timeoutResult.IsSuccess ? "Success" : "Failed")}");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"❌ Example 4 failed: {ex.Message}");
-}
+var timeoutResult = await runner.RunAsync(timeoutOptions).ConfigureAwait(false);
+Console.WriteLine($"Result: {(timeoutResult.IsSuccess ? "Success" : "Failed")}");
 
 Console.WriteLine("\n✅ Console sample completed!");
