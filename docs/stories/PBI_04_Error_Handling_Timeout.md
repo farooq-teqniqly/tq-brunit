@@ -1,6 +1,7 @@
 # PBI: Add error handling, validation, and timeout support
 
 **Story ID**: PBI-04  
+**Status**: ✅ **COMPLETED**  
 **Sprint**: 2 weeks  
 **Estimate**: 2 days  
 **Proposal Reference**: [`docs/proposals/BRUNIT_TESTING_CORE_TECHNICAL_PROPOSAL.md`](../proposals/BRUNIT_TESTING_CORE_TECHNICAL_PROPOSAL.md) - Section 5 (Error handling), Section 6 (Testing Strategy), Appendix B
@@ -37,29 +38,29 @@ So that **my tests don't hang indefinitely and I get clear error messages**
 
 ## Acceptance Criteria
 
-- [ ] `RunAsync` throws `ArgumentNullException` when options is null
-- [ ] `RunAsync` throws `ArgumentException` when `Target` is empty or whitespace
-- [ ] `RunAsync` throws `TimeoutException` when execution exceeds timeout
-- [ ] `RunAsync` kills process when timeout occurs
-- [ ] `RunAsync` returns `BrunoRunResult` with non-zero exit code when Bruno fails
-- [ ] `RunAsync` captures error output in `StandardError` when Bruno fails
-- [ ] `RunAsync` throws `InvalidOperationException` when process cannot be started
-- [ ] Unit tests verify all exception scenarios
-- [ ] Unit tests verify timeout handling
-- [ ] Unit tests verify error result capture
-- [ ] Integration test verifies timeout behavior (if feasible)
+- [x] `RunAsync` throws `ArgumentNullException` when options is null
+- [x] `RunAsync` throws `ArgumentException` when `Target` is empty or whitespace
+- [x] `RunAsync` throws `TimeoutException` when execution exceeds timeout
+- [x] `RunAsync` kills process when timeout occurs
+- [x] `RunAsync` returns `BrunoRunResult` with non-zero exit code when Bruno fails
+- [x] `RunAsync` captures error output in `StandardError` when Bruno fails
+- [x] `RunAsync` throws `InvalidOperationException` when process cannot be started
+- [x] Unit tests verify all exception scenarios
+- [x] Unit tests verify timeout handling
+- [x] Unit tests verify error result capture
+- [x] Integration test verifies timeout behavior (if feasible)
 
 ---
 
 ## Tasks
 
-- Add validation logic at start of `RunAsync`
-- Implement timeout handling with `Task.WhenAny` and `Task.Delay`
-- Add process kill logic on timeout
-- Add exception handling for process start failures
-- Write unit tests for all error scenarios
-- Write unit tests for timeout scenarios
-- Update XML documentation with exception details
+- [x] Add validation logic at start of `RunAsync`
+- [x] Implement timeout handling with `Task.WhenAny` and `Task.Delay`
+- [x] Add process kill logic on timeout
+- [x] Add exception handling for process start failures
+- [x] Write unit tests for all error scenarios
+- [x] Write unit tests for timeout scenarios
+- [x] Update XML documentation with exception details
 
 ---
 

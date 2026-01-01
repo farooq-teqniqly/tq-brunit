@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using NSubstitute;
@@ -9,6 +10,8 @@ namespace Teqniqly.BRUnit.Testing.Tests;
 
 public class BrunoRunnerTests
 {
+    private static readonly TimeSpan TimeoutForTesting = TimeSpan.FromMilliseconds(100);
+
     [Fact]
     public void Constructor_WithNullProcessFactory_ThrowsArgumentNullException()
     {
@@ -26,35 +29,19 @@ public class BrunoRunnerTests
             Target = "test.bru",
             EnvironmentName = "production",
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
-        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
-        Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
-        Assert.Equal("production", capturedStartInfo.ArgumentList[2]);
-        Assert.Equal("test.bru", capturedStartInfo.ArgumentList[3]);
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(4, capturedStartInfo[0].ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo[0].ArgumentList[0]);
+        Assert.Equal("--env", capturedStartInfo[0].ArgumentList[1]);
+        Assert.Equal("production", capturedStartInfo[0].ArgumentList[2]);
+        Assert.Equal("test.bru", capturedStartInfo[0].ArgumentList[3]);
     }
 
     [Fact]
@@ -62,33 +49,17 @@ public class BrunoRunnerTests
     {
         // Arrange
         var options = new BrunoRunOptions { BruExecutablePath = "dotnet", Target = "test.bru" };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(2, capturedStartInfo.ArgumentList.Count);
-        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
-        Assert.Equal("test.bru", capturedStartInfo.ArgumentList[1]);
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(2, capturedStartInfo[0].ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo[0].ArgumentList[0]);
+        Assert.Equal("test.bru", capturedStartInfo[0].ArgumentList[1]);
     }
 
     [Fact]
@@ -141,36 +112,62 @@ public class BrunoRunnerTests
             Target = "test folder/test file.bru",
             EnvironmentName = "my environment",
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
         // Arguments in ArgumentList (runtime handles escaping)
-        Assert.Equal(4, capturedStartInfo.ArgumentList.Count);
-        Assert.Equal("run", capturedStartInfo.ArgumentList[0]);
-        Assert.Equal("--env", capturedStartInfo.ArgumentList[1]);
-        Assert.Equal("my environment", capturedStartInfo.ArgumentList[2]);
-        Assert.Equal("test folder/test file.bru", capturedStartInfo.ArgumentList[3]);
+        Assert.Equal(4, capturedStartInfo[0].ArgumentList.Count);
+        Assert.Equal("run", capturedStartInfo[0].ArgumentList[0]);
+        Assert.Equal("--env", capturedStartInfo[0].ArgumentList[1]);
+        Assert.Equal("my environment", capturedStartInfo[0].ArgumentList[2]);
+        Assert.Equal("test folder/test file.bru", capturedStartInfo[0].ArgumentList[3]);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenBrunoFails_ReturnsNonZeroExitCode()
+    {
+        // Arrange
+        // Use dotnet with an invalid command to produce a non-zero exit code
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "dotnet",
+            Target = "invalidcommand",
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.NotEqual(0, result.ExitCode);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_WhenExecutionExceedsTimeout_ThrowsTimeoutException()
+    {
+        // Arrange
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(CreateHangingProcess);
+        var runner = new BrunoRunner(processFactory);
+
+        try
+        {
+            // Act & Assert
+            var exception = await Assert
+                .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
+                .ConfigureAwait(false);
+            Assert.Contains("timeout", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("0.1", exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            CleanupHangingProcess(hangingProcess);
+        }
     }
 
     [Fact]
@@ -195,6 +192,75 @@ public class BrunoRunnerTests
         Assert.Contains("nonexistent", exception.Message, StringComparison.Ordinal);
     }
 
+    [SkippableFact]
+    public async Task RunAsync_WhenTimeoutOccurs_KillsProcess()
+    {
+        // Arrange
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(CreateHangingProcess);
+        var runner = new BrunoRunner(processFactory);
+
+        try
+        {
+            var startTime = DateTime.UtcNow;
+
+            // Act
+            try
+            {
+                await runner.RunAsync(options).ConfigureAwait(false);
+                Assert.Fail("Expected TimeoutException was not thrown.");
+            }
+            catch (TimeoutException)
+            {
+                // Expected
+            }
+
+            var elapsed = DateTime.UtcNow - startTime;
+
+            // Assert
+            // If the process wasn't killed, this test would take much longer
+            Assert.True(elapsed.TotalSeconds < 2, "Process should have been killed quickly");
+
+            try
+            {
+                hangingProcess?.Refresh();
+                Assert.True(hangingProcess?.HasExited ?? false, "Process should have been killed");
+            }
+            catch (InvalidOperationException)
+            {
+                // Process already exited/killed - this is expected
+            }
+        }
+        finally
+        {
+            CleanupHangingProcess(hangingProcess);
+        }
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_WhenTimeoutOccurs_ThrowsTimeoutException_WithOutputGeneratingProcess()
+    {
+        // Arrange
+        var (hangingProcess, options, processFactory) = SetupTimeoutTest(
+            CreateHangingProcessWithOutput
+        );
+        var runner = new BrunoRunner(processFactory);
+
+        try
+        {
+            // Act & Assert
+            var exception = await Assert
+                .ThrowsAsync<TimeoutException>(() => runner.RunAsync(options))
+                .ConfigureAwait(false);
+            Assert.NotNull(exception);
+            // Note: We can't easily verify partial output was captured without exposing internal state,
+            // but the fact that the exception was thrown means the timeout logic executed
+        }
+        finally
+        {
+            CleanupHangingProcess(hangingProcess);
+        }
+    }
+
     [Fact]
     public async Task RunAsync_WithCustomWorkingDirectory_PassesToProcessStartInfo()
     {
@@ -206,31 +272,15 @@ public class BrunoRunnerTests
             Target = "--version",
             WorkingDirectory = expectedWorkingDirectory,
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(expectedWorkingDirectory, capturedStartInfo.WorkingDirectory);
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(expectedWorkingDirectory, capturedStartInfo[0].WorkingDirectory);
     }
 
     [Fact]
@@ -270,7 +320,8 @@ public class BrunoRunnerTests
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 };
-                return Process.Start(startInfo)!;
+                var processFactory = new ProcessFactory();
+                return processFactory.Start(startInfo);
             });
         var runner = new BrunoRunner(processFactory);
 
@@ -315,32 +366,16 @@ public class BrunoRunnerTests
             Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(var1Value, capturedStartInfo.Environment[var1Name]);
-        Assert.Equal(var2Value, capturedStartInfo.Environment[var2Name]);
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(var1Value, capturedStartInfo[0].Environment[var1Name]);
+        Assert.Equal(var2Value, capturedStartInfo[0].Environment[var2Name]);
     }
 
     [Fact]
@@ -357,31 +392,15 @@ public class BrunoRunnerTests
             Target = "--version",
             EnvironmentVariables = envVars,
         };
-        var processFactory = Substitute.For<IProcessFactory>();
-        ProcessStartInfo? capturedStartInfo = null;
-        processFactory
-            .Start(Arg.Any<ProcessStartInfo>())
-            .Returns(callInfo =>
-            {
-                capturedStartInfo = callInfo.Arg<ProcessStartInfo>();
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "--version",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                };
-                return Process.Start(startInfo)!;
-            });
-        var runner = new BrunoRunner(processFactory);
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
 
         // Act
         await runner.RunAsync(options);
 
         // Assert
-        Assert.NotNull(capturedStartInfo);
-        Assert.Equal(string.Empty, capturedStartInfo.Environment["NULL_VAR"]);
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(string.Empty, capturedStartInfo[0].Environment["NULL_VAR"]);
     }
 
     [Fact]
@@ -460,6 +479,92 @@ public class BrunoRunnerTests
         Assert.Contains("Target", exception.Message, StringComparison.Ordinal);
     }
 
+    private static void CleanupHangingProcess(Process? hangingProcess)
+    {
+        try
+        {
+            if (hangingProcess?.HasExited == false)
+            {
+                hangingProcess.Kill(entireProcessTree: true);
+            }
+        }
+#pragma warning disable CA1031 // Do not catch general exception types
+        catch
+#pragma warning restore CA1031
+        {
+            // Ignore cleanup errors
+        }
+
+        hangingProcess?.Dispose();
+    }
+
+    private static Process CreateHangingProcess()
+    {
+        // Create a process that will hang (sleep for a long time)
+        // Use ping on Windows (takes ~10 seconds for 11 pings) or sleep on Unix
+        var processFactory = new ProcessFactory();
+        if (OperatingSystem.IsWindows())
+        {
+            // ping -n 11 127.0.0.1 takes about 10 seconds (11 pings with 1 second intervals)
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "ping",
+                Arguments = "-n 11 127.0.0.1",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return processFactory.Start(startInfo);
+        }
+        else
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "sleep",
+                Arguments = "10",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return processFactory.Start(startInfo);
+        }
+    }
+
+    private static Process CreateHangingProcessWithOutput()
+    {
+        // Create a process that writes output and then hangs
+        var processFactory = new ProcessFactory();
+        if (OperatingSystem.IsWindows())
+        {
+            // Use PowerShell to echo and then sleep
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "powershell",
+                Arguments = "-Command \"Write-Output 'test-output'; Start-Sleep -Seconds 10\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return processFactory.Start(startInfo);
+        }
+        else
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "sh",
+                Arguments = "-c \"echo test-output && sleep 10\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            return processFactory.Start(startInfo);
+        }
+    }
+
     private static string? FindBrunoCliPath()
     {
         // Try to find bru executable
@@ -487,10 +592,58 @@ public class BrunoRunnerTests
         return null;
     }
 
+    private static (
+        IProcessFactory processFactory,
+        BrunoRunner runner,
+        List<ProcessStartInfo> capturedStartInfo
+    ) SetupProcessFactoryMock()
+    {
+        var processFactory = Substitute.For<IProcessFactory>();
+        List<ProcessStartInfo> capturedStartInfo = [];
+        processFactory
+            .Start(Arg.Do<ProcessStartInfo>(x => capturedStartInfo.Add(x)))
+            .Returns(callInfo =>
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = "--version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+                var realProcessFactory = new ProcessFactory();
+                return realProcessFactory.Start(startInfo);
+            });
+        var runner = new BrunoRunner(processFactory);
+        return (processFactory, runner, capturedStartInfo);
+    }
+
+    private static (
+        Process hangingProcess,
+        BrunoRunOptions options,
+        IProcessFactory processFactory
+    ) SetupTimeoutTest(Func<Process> createHangingProcess)
+    {
+        var processFactory = Substitute.For<IProcessFactory>();
+        var hangingProcess = createHangingProcess();
+        processFactory.Start(Arg.Any<ProcessStartInfo>()).Returns(hangingProcess);
+
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "bru",
+            Target = "test.bru",
+            Timeout = TimeoutForTesting,
+        };
+
+        return (hangingProcess, options, processFactory);
+    }
+
     private static bool TryRunBrunoVersion(string bruPath)
     {
         try
         {
+            var processFactory = new ProcessFactory();
             var startInfo = new ProcessStartInfo
             {
                 FileName = bruPath,
@@ -500,19 +653,11 @@ public class BrunoRunnerTests
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            using var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                return false;
-            }
+            using var process = processFactory.Start(startInfo);
 
             process.WaitForExit();
             return process.ExitCode == 0
                 || !string.IsNullOrEmpty(process.StandardOutput.ReadToEnd());
-        }
-        catch (System.ComponentModel.Win32Exception)
-        {
-            return false;
         }
         catch (InvalidOperationException)
         {

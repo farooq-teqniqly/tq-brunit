@@ -23,6 +23,8 @@ public sealed class BrunoRunner : IBrunoRunner
     }
 
     /// <inheritdoc />
+    /// <exception cref="TimeoutException">Thrown when execution exceeds the timeout specified in <paramref name="options"/>.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the process cannot be started.</exception>
     public async Task<BrunoRunResult> RunAsync(
         BrunoRunOptions options,
         CancellationToken cancellationToken = default
@@ -33,7 +35,7 @@ public sealed class BrunoRunner : IBrunoRunner
         var startInfo = CreateProcessStartInfo(options);
         var process = _processFactory.Start(startInfo);
 
-        return await ExecuteProcessAndCaptureOutput(process, cancellationToken)
+        return await ExecuteProcessAndCaptureOutput(process, options.Timeout, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -82,6 +84,7 @@ public sealed class BrunoRunner : IBrunoRunner
 
     private static async Task<BrunoRunResult> ExecuteProcessAndCaptureOutput(
         Process process,
+        TimeSpan timeout,
         CancellationToken cancellationToken
     )
     {
@@ -90,9 +93,22 @@ public sealed class BrunoRunner : IBrunoRunner
             var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
             var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
 
+            var waitTask = process.WaitForExitAsync(cancellationToken);
+            var timeoutTask = Task.Delay(timeout, cancellationToken);
+            var completedTask = await Task.WhenAny(waitTask, timeoutTask).ConfigureAwait(false);
+
+            if (completedTask == timeoutTask && !process.HasExited)
+            {
+                await HandleProcessCleanupAsync(process, outputTask, errorTask)
+                    .ConfigureAwait(false);
+                throw new TimeoutException(
+                    $"Bruno execution exceeded timeout of {timeout.TotalSeconds} seconds."
+                );
+            }
+
             try
             {
-                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                await waitTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -102,7 +118,8 @@ public sealed class BrunoRunner : IBrunoRunner
                 //    another cancellation exception)
                 // 3. Gather any output/error that was captured before cancellation occurred
                 // 4. Rethrow the OperationCanceledException to preserve cancellation semantics for the caller
-                await HandleCancellationAsync(process, outputTask, errorTask).ConfigureAwait(false);
+                await HandleProcessCleanupAsync(process, outputTask, errorTask)
+                    .ConfigureAwait(false);
                 throw;
             }
 
@@ -134,9 +151,9 @@ public sealed class BrunoRunner : IBrunoRunner
     }
 
     [ExcludeFromCodeCoverage(
-        Justification = "Handles cleanup during cancellation scenarios. Testing cancellation with process termination and async output gathering is difficult to reliably reproduce."
+        Justification = "Handles cleanup during cancellation and timeout scenarios. Testing process termination and async output gathering is difficult to reliably reproduce."
     )]
-    private static async Task HandleCancellationAsync(
+    private static async Task HandleProcessCleanupAsync(
         Process process,
         Task<string> outputTask,
         Task<string> errorTask
@@ -163,7 +180,7 @@ public sealed class BrunoRunner : IBrunoRunner
         catch (Exception)
 #pragma warning restore CA1031
         {
-            // Ignore errors when killing the process (e.g., already exited)
+            // Ignore errors when killing the process (e.g., process may have already exited)
         }
     }
 
