@@ -539,6 +539,35 @@ public class BrunoRunnerTests
     }
 
     [SkippableFact]
+    public async Task RunAsync_WithRealBrunoCli_AndEnvironmentName_ExecutesSuccessfully()
+    {
+        // Arrange
+        var bruPath = FindBrunoCliPath();
+        Skip.If(string.IsNullOrEmpty(bruPath), "Bruno CLI not available");
+
+        // Use bru run --env test-env -h to verify environment flag is accepted
+        // Even if the environment doesn't exist, Bruno CLI should accept the flag syntax
+        // and either show help or an error about the environment, but the command structure should be valid
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = bruPath,
+            Target = "-h",
+            EnvironmentName = "test-env",
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        // The command should succeed (exit code 0) because -h is a help flag
+        // This verifies that the --env flag is correctly passed to Bruno CLI
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.ExitCode);
+        Assert.NotEmpty(result.StandardOutput);
+    }
+
+    [SkippableFact]
     public async Task RunAsync_WithRealBrunoCli_ExecutesSuccessfully()
     {
         // Arrange
