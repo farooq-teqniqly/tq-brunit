@@ -81,7 +81,7 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
     }
 
     [Fact]
-    public async Task RunCollection_WithTimeout_CompletesWithinTimeout()
+    public async Task RunCollection_CompletesWithinTimeout()
     {
         // Arrange
         var timeout = TimeSpan.FromMinutes(5);
@@ -104,6 +104,31 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
             stopwatch.Elapsed < timeout,
             $"Execution took {stopwatch.Elapsed.TotalSeconds:F2} seconds, which exceeds the timeout of {timeout.TotalSeconds:F2} seconds."
         );
+    }
+
+    [SkippableFact]
+    public async Task RunCollection_WhenTimeoutExceeded_ThrowsTimeoutException()
+    {
+        Skip.IfNot(OperatingSystem.IsWindows(), "Windows-specific test using ping command");
+
+        // Arrange
+        // Use a command that will hang longer than the timeout
+        // On Windows, use ping with enough packets to exceed the timeout
+        var shortTimeout = TimeSpan.FromMilliseconds(100);
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = "ping",
+            Target = "-n 11 127.0.0.1", // 11 packets will take longer than 100ms
+            Timeout = shortTimeout,
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<TimeoutException>(async () =>
+            await _runner.RunAsync(options)
+        );
+
+        Assert.Contains("timeout", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("0.1", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

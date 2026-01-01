@@ -25,14 +25,15 @@ dotnet test
 
 ## Example Tests
 
-The sample includes 6 example tests:
+The sample includes 7 example tests:
 
 1. **`RunCollection_WithValidCollection_ReturnsSuccess`**: Basic test that runs a Bruno collection and verifies success
 2. **`RunCollection_WithProductionEnvironment_ReturnsSuccess`**: Demonstrates using different Bruno environments
 3. **`RunCollection_WithEnvironmentVariables_ReturnsSuccess`**: Shows how to pass process-level environment variables and verifies successful execution
-4. **`RunCollection_WithTimeout_CompletesWithinTimeout`**: Demonstrates custom timeout configuration and verifies execution completes within the timeout
-5. **`RunCollection_WhenCollectionFails_ReturnsFailure`**: Tests error handling when a collection fails
-6. **`RunCollection_WithInvalidBrunoPath_ThrowsInvalidOperationException`**: Tests exception handling for invalid Bruno executable paths
+4. **`RunCollection_CompletesWithinTimeout`**: Verifies that a successful collection execution completes within the configured timeout
+5. **`RunCollection_WhenTimeoutExceeded_ThrowsTimeoutException`**: Demonstrates timeout enforcement by using a command that exceeds the timeout and verifying a `TimeoutException` is thrown
+6. **`RunCollection_WhenCollectionFails_ReturnsFailure`**: Tests error handling when a collection fails
+7. **`RunCollection_WithInvalidBrunoPath_ThrowsInvalidOperationException`**: Tests exception handling for invalid Bruno executable paths
 
 ## Key Features Demonstrated
 
