@@ -1,6 +1,9 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Security;
+using System.Text.RegularExpressions;
 using Teqniqly.BRUnit.Testing;
 
 namespace NUnitSample;
@@ -235,7 +238,12 @@ public class BrunoContractTests
         var commonConfigs = new[] { "Debug", "Release" };
         foreach (var config in commonConfigs)
         {
-            var candidatePath = Path.Combine(testHelperBinDir, config, TargetFrameworkMoniker, executableName);
+            var candidatePath = Path.Combine(
+                testHelperBinDir,
+                config,
+                TargetFrameworkMoniker,
+                executableName
+            );
 
             if (File.Exists(candidatePath))
             {
@@ -255,16 +263,16 @@ public class BrunoContractTests
                     var candidatePath = Path.Combine(netDir, executableName);
                     if (File.Exists(candidatePath))
                     {
+                        return candidatePath;
+                    }
+                }
+            }
         }
         catch (UnauthorizedAccessException)
         {
             // If directory enumeration fails due to permissions, fall through to recursive search
         }
         catch (Exception ex) when (ex is IOException or SecurityException)
-        {
-            // If directory enumeration fails, fall through to recursive search
-        }        }
-        catch
         {
             // If directory enumeration fails, fall through to recursive search
         }
@@ -291,9 +299,14 @@ public class BrunoContractTests
 
             // Recursively search subdirectories
             var subdirs = Directory.GetDirectories(directory);
-        try
-        {
-            // Recursive search logic here
+            foreach (var subdir in subdirs)
+            {
+                var result = FindTestHelperRecursive(subdir, fileName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
         }
         catch (UnauthorizedAccessException)
         {
@@ -302,14 +315,6 @@ public class BrunoContractTests
         catch (Exception ex) when (ex is IOException or SecurityException)
         {
             // Ignore I/O and security errors during recursive search
-        }                {
-                    return result;
-                }
-            }
-        }
-        catch
-        {
-            // Ignore errors during recursive search
         }
 
         return null;
@@ -317,30 +322,59 @@ public class BrunoContractTests
 
     private static string GetTargetFrameworkMoniker()
     {
+        // First attempt: derive from RuntimeInformation.FrameworkDescription
+        // Format: ".NET 10.0.0" or ".NET Core 8.0.0"
+        var frameworkDescription = RuntimeInformation.FrameworkDescription;
+        var runtimeMatch = Regex.Match(
+            frameworkDescription,
+            @"\.NET(?:\s+Core)?\s+(\d+)(?:\.(\d+))?(?:\.(\d+))?"
+        );
+
+        if (runtimeMatch.Success)
+        {
+            var major = runtimeMatch.Groups[1].Value;
+            var minor = runtimeMatch.Groups[2].Success ? runtimeMatch.Groups[2].Value : "0";
+            return $"net{major}.{minor}";
+        }
+
+        // Second attempt: derive from Environment.Version
+        // Environment.Version provides the runtime version
+        var envVersion = Environment.Version;
+        if (envVersion.Major > 0)
+        {
+            return $"net{envVersion.Major}.{envVersion.Minor}";
+        }
+
+        // Third attempt: parse TargetFrameworkAttribute
         var assembly = typeof(BrunoContractTests).Assembly;
         var targetFrameworkAttribute = assembly.GetCustomAttribute<TargetFrameworkAttribute>();
 
         if (targetFrameworkAttribute?.FrameworkName != null)
         {
-            // TargetFrameworkAttribute.FrameworkName format: ".NETCoreApp,Version=v10.0"
-            // Extract the version and convert to TFM format: "net10.0"
+            // TargetFrameworkAttribute.FrameworkName format: ".NETCoreApp,Version=v10.0" or ".NETCoreApp,Version=v8.0.1"
+            // Extract the version and convert to TFM format: "net10.0" or "net8.0"
             var frameworkName = targetFrameworkAttribute.FrameworkName;
 
-            // Parse the version from the framework name
-            var versionMatch = System.Text.RegularExpressions.Regex.Match(
+            // Parse the version from the framework name - flexible regex handles optional minor/patch
+            var versionMatch = Regex.Match(
                 frameworkName,
-                @"Version=v(\d+)\.(\d+)"
+                @"Version=v(\d+)(?:\.(\d+))?(?:\.(\d+))?"
             );
 
             if (versionMatch.Success)
             {
                 var major = versionMatch.Groups[1].Value;
-                var minor = versionMatch.Groups[2].Value;
+                var minor = versionMatch.Groups[2].Success ? versionMatch.Groups[2].Value : "0";
                 return $"net{major}.{minor}";
             }
         }
 
-        // Fallback to hardcoded value if parsing fails
-        return "net10.0";
+        // If all approaches fail, throw an exception rather than returning incorrect TFM
+        throw new InvalidOperationException(
+            $"Unable to determine target framework moniker. "
+                + $"FrameworkDescription: {RuntimeInformation.FrameworkDescription}, "
+                + $"Environment.Version: {Environment.Version}, "
+                + $"TargetFrameworkAttribute: {targetFrameworkAttribute?.FrameworkName ?? "null"}"
+        );
     }
 }
