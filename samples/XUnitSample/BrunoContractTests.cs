@@ -106,29 +106,88 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
         );
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task RunCollection_WhenTimeoutExceeded_ThrowsTimeoutException()
     {
-        Skip.IfNot(OperatingSystem.IsWindows(), "Windows-specific test using ping command");
-
         // Arrange
-        // Use a command that will hang longer than the timeout
-        // On Windows, use ping with enough packets to exceed the timeout
-        var shortTimeout = TimeSpan.FromMilliseconds(100);
+        // Use TestHelper executable that sleeps longer than the timeout
+        var shortTimeout = TimeSpan.FromMilliseconds(200);
+        var testHelperPath = GetTestHelperPath();
+
+        if (testHelperPath == null || !File.Exists(testHelperPath))
+        {
+            throw new InvalidOperationException(
+                $"TestHelper executable not found at: {testHelperPath}. "
+                    + "Make sure TestHelper project is built before running tests."
+            );
+        }
+
+        // TestHelper sleeps for 5 seconds, which exceeds the 200ms timeout
+        // BrunoRunner will call: TestHelper.exe run 5
         var options = new BrunoRunOptions
         {
-            BruExecutablePath = "ping",
-            Target = "-n 11 127.0.0.1", // 11 packets will take longer than 100ms
+            BruExecutablePath = testHelperPath,
+            Target = "5", // Sleep for 5 seconds (TestHelper will parse this after "run")
             Timeout = shortTimeout,
         };
 
-        // Act & Assert
+        // Act
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var exception = await Assert.ThrowsAsync<TimeoutException>(async () =>
             await _runner.RunAsync(options)
         );
+        stopwatch.Stop();
 
+        // Assert
+        Assert.NotNull(exception);
         Assert.Contains("timeout", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("0.1", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(
+            shortTimeout.TotalSeconds.ToString(
+                "F1",
+                System.Globalization.CultureInfo.InvariantCulture
+            ),
+            exception.Message,
+            StringComparison.OrdinalIgnoreCase
+        );
+
+        // Verify the timeout was enforced (should complete quickly, not wait for the full 5 seconds)
+        Assert.True(
+            stopwatch.Elapsed < TimeSpan.FromSeconds(1),
+            $"Timeout should be enforced quickly, but took {stopwatch.Elapsed.TotalSeconds:F2} seconds"
+        );
+    }
+
+    private static string? GetTestHelperPath()
+    {
+        // Navigate from test assembly location to find TestHelper executable
+        var assemblyLocation = Path.GetDirectoryName(typeof(BrunoContractTests).Assembly.Location);
+        if (assemblyLocation == null)
+        {
+            return null;
+        }
+
+        // Go up from bin/Debug/net10.0 to samples directory
+        var currentDir = assemblyLocation;
+        for (var i = 0; i < 4 && currentDir != null; i++)
+        {
+            currentDir = Path.GetDirectoryName(currentDir);
+        }
+
+        if (currentDir == null)
+        {
+            return null;
+        }
+
+        var testHelperPath = Path.Combine(
+            currentDir,
+            "TestHelper",
+            "bin",
+            "Debug",
+            "net10.0",
+            OperatingSystem.IsWindows() ? "TestHelper.exe" : "TestHelper"
+        );
+
+        return testHelperPath;
     }
 
     [Fact]
