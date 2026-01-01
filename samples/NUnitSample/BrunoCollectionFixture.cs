@@ -4,7 +4,7 @@ namespace NUnitSample;
 /// NUnit fixture that provides the path to the Bruno collection.
 /// This ensures the collection path is resolved once and shared across all tests.
 /// </summary>
-public sealed class BrunoCollectionFixture : IDisposable
+public sealed class BrunoCollectionFixture
 {
     public string CollectionPath { get; }
 
@@ -55,11 +55,5 @@ public sealed class BrunoCollectionFixture : IDisposable
                     + "The directory 'bruno-collection' could not be found in any parent directory of the assembly location."
             );
         }
-    }
-
-    public void Dispose()
-    {
-        // No cleanup needed - sealed class with no unmanaged resources
-        GC.SuppressFinalize(this);
     }
 }

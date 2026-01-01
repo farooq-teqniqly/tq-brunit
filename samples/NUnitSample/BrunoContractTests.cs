@@ -17,7 +17,6 @@ public class BrunoContractTests
     public void OneTimeSetUp()
     {
         var fixture = new BrunoCollectionFixture();
-        ArgumentNullException.ThrowIfNull(fixture);
         _runner = new BrunoRunner(new ProcessFactory());
         _collectionPath = fixture.CollectionPath;
     }
@@ -220,15 +219,84 @@ public class BrunoContractTests
             return null;
         }
 
-        var testHelperPath = Path.Combine(
-            currentDir,
-            "TestHelper",
-            "bin",
-            "Debug",
-            "net10.0",
-            OperatingSystem.IsWindows() ? "TestHelper.exe" : "TestHelper"
-        );
+        var testHelperBinDir = Path.Combine(currentDir, "TestHelper", "bin");
+        if (!Directory.Exists(testHelperBinDir))
+        {
+            return null;
+        }
 
-        return testHelperPath;
+        var executableName = OperatingSystem.IsWindows() ? "TestHelper.exe" : "TestHelper";
+
+        // Try common build configurations first (Debug, Release)
+        var commonConfigs = new[] { "Debug", "Release" };
+        foreach (var config in commonConfigs)
+        {
+            var candidatePath = Path.Combine(testHelperBinDir, config, "net10.0", executableName);
+
+            if (File.Exists(candidatePath))
+            {
+                return candidatePath;
+            }
+        }
+
+        // If not found in common configs, enumerate subfolders under bin
+        try
+        {
+            var configDirs = Directory.GetDirectories(testHelperBinDir);
+            foreach (var configDir in configDirs)
+            {
+                var netDir = Path.Combine(configDir, "net10.0");
+                if (Directory.Exists(netDir))
+                {
+                    var candidatePath = Path.Combine(netDir, executableName);
+                    if (File.Exists(candidatePath))
+                    {
+                        return candidatePath;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // If directory enumeration fails, fall through to recursive search
+        }
+
+        // Fall back to recursive search under TestHelper/bin
+        return FindTestHelperRecursive(testHelperBinDir, executableName);
+    }
+
+    private static string? FindTestHelperRecursive(string directory, string fileName)
+    {
+        if (!Directory.Exists(directory))
+        {
+            return null;
+        }
+
+        try
+        {
+            // Check current directory for the executable
+            var candidatePath = Path.Combine(directory, fileName);
+            if (File.Exists(candidatePath))
+            {
+                return candidatePath;
+            }
+
+            // Recursively search subdirectories
+            var subdirs = Directory.GetDirectories(directory);
+            foreach (var subdir in subdirs)
+            {
+                var result = FindTestHelperRecursive(subdir, fileName);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors during recursive search
+        }
+
+        return null;
     }
 }
