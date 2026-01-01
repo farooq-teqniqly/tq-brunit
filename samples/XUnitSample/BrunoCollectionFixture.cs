@@ -10,25 +10,38 @@ public sealed class BrunoCollectionFixture : IDisposable
 
     public BrunoCollectionFixture()
     {
-        // Resolve the collection path relative to the sample project
-        // Go up from bin/Debug/net10.0 to the source directory, then to samples root
-        var assemblyLocation = typeof(BrunoCollectionFixture).Assembly.Location;
-        var binDirectory = Path.GetDirectoryName(assemblyLocation)!;
-        var debugDirectory = Path.GetDirectoryName(binDirectory)!;
-        var netDirectory = Path.GetDirectoryName(debugDirectory)!;
-        var binFolder = Path.GetDirectoryName(netDirectory)!;
-        var samplesDirectory = Path.GetDirectoryName(binFolder)!;
-        CollectionPath = Path.Combine(samplesDirectory, "bruno-collection");
+        // Navigate up from the assembly location to find the samples directory
+        var assemblyLocation = Path.GetDirectoryName(typeof(BrunoCollectionFixture).Assembly.Location);
+        var currentDir = assemblyLocation;
+        
+        // Walk up until we find the samples directory or reach the root
+        while (currentDir != null && !Directory.Exists(Path.Combine(currentDir, "bruno-collection")))
+        {
+            var parent = Directory.GetParent(currentDir);
+            if (parent == null)
+            {
+                break;
+            }
+
+            currentDir = parent.FullName;
+        }
+        
+        if (currentDir == null)
+        {
+            throw new InvalidOperationException(
+                "Unable to locate samples directory. Make sure the test is running from the expected location.");
+        }
+        
+        CollectionPath = Path.Combine(currentDir, "bruno-collection");
 
         if (!Directory.Exists(CollectionPath))
         {
             throw new InvalidOperationException(
-                $"Bruno collection not found at: {CollectionPath}. "
-                    + "Make sure the samples/bruno-collection exists."
+                $"Bruno collection not found at: {CollectionPath}. " +
+                "Make sure the samples/bruno-collection exists."
             );
         }
     }
-
     public void Dispose()
     {
         // No cleanup needed - sealed class with no unmanaged resources

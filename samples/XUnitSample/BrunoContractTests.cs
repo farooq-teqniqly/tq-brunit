@@ -60,7 +60,7 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
     }
 
     [Fact]
-    public async Task RunCollection_WithEnvironmentVariables_PassesVariablesToProcess()
+    public async Task RunCollection_WithEnvironmentVariables_ReturnsSuccess()
     {
         // Arrange
         var options = new BrunoRunOptions
@@ -84,19 +84,26 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
     public async Task RunCollection_WithTimeout_CompletesWithinTimeout()
     {
         // Arrange
+        var timeout = TimeSpan.FromMinutes(5);
         var options = new BrunoRunOptions
         {
             Target = "requests",
             EnvironmentName = "Local",
-            Timeout = TimeSpan.FromMinutes(5),
+            Timeout = timeout,
             WorkingDirectory = _collectionPath,
         };
 
         // Act
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var result = await _runner.RunAsync(options);
+        stopwatch.Stop();
 
         // Assert
         Assert.True(result.IsSuccess);
+        Assert.True(
+            stopwatch.Elapsed < timeout,
+            $"Execution took {stopwatch.Elapsed.TotalSeconds:F2} seconds, which exceeds the timeout of {timeout.TotalSeconds:F2} seconds."
+        );
     }
 
     [Fact]
