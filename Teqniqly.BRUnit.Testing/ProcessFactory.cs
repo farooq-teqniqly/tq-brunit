@@ -15,15 +15,12 @@ public sealed class ProcessFactory : IProcessFactory
 
         try
         {
-            var process = Process.Start(startInfo);
             // On Unix systems, Process.Start can return null when the process cannot be started.
             // On Windows, Process.Start throws Win32Exception instead.
             // We handle both cases to ensure consistent InvalidOperationException behavior across platforms.
-            if (process == null)
-            {
-                throw new InvalidOperationException(BuildProcessStartErrorMessage(startInfo));
-            }
-
+            var process =
+                Process.Start(startInfo)
+                ?? throw new InvalidOperationException(BuildProcessStartErrorMessage(startInfo));
             return process;
         }
         catch (Win32Exception ex)
