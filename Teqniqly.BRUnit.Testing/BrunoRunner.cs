@@ -58,7 +58,7 @@ public sealed class BrunoRunner : IBrunoRunner
     {
         var startInfo = new ProcessStartInfo
         {
-            FileName = options.BruExecutablePath,
+            FileName = ResolveExecutablePath(options.BruExecutablePath),
             WorkingDirectory = options.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -182,6 +182,28 @@ public sealed class BrunoRunner : IBrunoRunner
         {
             // Ignore errors when killing the process (e.g., process may have already exited)
         }
+    }
+
+    private static string ResolveExecutablePath(string path)
+    {
+        if (
+            Path.IsPathRooted(path)
+            || path.Contains(Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            || path.Contains(Path.AltDirectorySeparatorChar, StringComparison.Ordinal)
+        )
+        {
+            return path;
+        }
+
+        if (
+            OperatingSystem.IsWindows()
+            && !path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            return path + ".exe";
+        }
+
+        return path;
     }
 
     private static void SetEnvironmentVariables(

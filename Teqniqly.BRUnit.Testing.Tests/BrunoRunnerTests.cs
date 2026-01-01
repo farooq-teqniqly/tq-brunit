@@ -116,12 +116,140 @@ public class BrunoRunnerTests
         // Assert
         processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
         Assert.Single(capturedStartInfo);
-        // Arguments in ArgumentList (runtime handles escaping)
         Assert.Equal(4, capturedStartInfo[0].ArgumentList.Count);
         Assert.Equal("run", capturedStartInfo[0].ArgumentList[0]);
         Assert.Equal("--env", capturedStartInfo[0].ArgumentList[1]);
         Assert.Equal("my environment", capturedStartInfo[0].ArgumentList[2]);
         Assert.Equal("test folder/test file.bru", capturedStartInfo[0].ArgumentList[3]);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnUnix_DoesNotAddExeExtension()
+    {
+        Skip.If(OperatingSystem.IsWindows(), "Unix-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnUnix_PreservesExplicitPath()
+    {
+        Skip.If(OperatingSystem.IsWindows(), "Unix-specific test");
+
+        // Arrange
+        var explicitPath = Path.Combine("usr", "bin", "bru");
+        var options = new BrunoRunOptions { BruExecutablePath = explicitPath, Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(explicitPath, capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_AddsExeExtension_WhenNotPresent()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru.exe", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesExeExtension_CaseInsensitive()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru.EXE", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru.EXE", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesExeExtension_WhenAlreadyPresent()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru.exe", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru.exe", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesExplicitPath_WithSeparators()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var explicitPath = Path.Combine("Program Files", "bru", "bru");
+        var options = new BrunoRunOptions { BruExecutablePath = explicitPath, Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(explicitPath, capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesRootedPath()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var rootedPath = Path.Combine("C:", "Program Files", "bru", "bru.exe");
+        var options = new BrunoRunOptions { BruExecutablePath = rootedPath, Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(rootedPath, capturedStartInfo[0].FileName);
     }
 
     [Fact]
@@ -213,7 +341,6 @@ public class BrunoRunnerTests
             var elapsed = DateTime.UtcNow - startTime;
 
             // Assert
-            // If the process wasn't killed, this test would take much longer
             Assert.True(elapsed.TotalSeconds < 2, "Process should have been killed quickly");
 
             try
@@ -223,7 +350,7 @@ public class BrunoRunnerTests
             }
             catch (InvalidOperationException)
             {
-                // Process already exited/killed - this is expected
+                // Process already exited/killed - expected
             }
         }
         finally
@@ -410,6 +537,33 @@ public class BrunoRunnerTests
     }
 
     [SkippableFact]
+    public async Task RunAsync_WithRealBrunoCli_AndEnvironmentName_ExecutesSuccessfully()
+    {
+        // Arrange
+        var bruPath = FindBrunoCliPath();
+        Skip.If(string.IsNullOrEmpty(bruPath), "Bruno CLI not available");
+
+        // Use bru run --env test-env -h to verify environment flag is accepted
+        // Even if the environment doesn't exist, Bruno CLI should accept the flag syntax
+        // and either show help or an error about the environment, but the command structure should be valid
+        var options = new BrunoRunOptions
+        {
+            BruExecutablePath = bruPath,
+            Target = "-h",
+            EnvironmentName = "test-env",
+        };
+        var runner = new BrunoRunner(new ProcessFactory());
+
+        // Act
+        var result = await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.ExitCode);
+        Assert.NotEmpty(result.StandardOutput);
+    }
+
+    [SkippableFact]
     public async Task RunAsync_WithRealBrunoCli_ExecutesSuccessfully()
     {
         // Arrange
@@ -496,12 +650,9 @@ public class BrunoRunnerTests
 
     private static Process CreateHangingProcess()
     {
-        // Create a process that will hang (sleep for a long time)
-        // Use ping on Windows (takes ~10 seconds for 11 pings) or sleep on Unix
         var processFactory = new ProcessFactory();
         if (OperatingSystem.IsWindows())
         {
-            // ping -n 11 127.0.0.1 takes about 10 seconds (11 pings with 1 second intervals)
             var startInfo = new ProcessStartInfo
             {
                 FileName = "ping",
@@ -530,11 +681,9 @@ public class BrunoRunnerTests
 
     private static Process CreateHangingProcessWithOutput()
     {
-        // Create a process that writes output and then hangs
         var processFactory = new ProcessFactory();
         if (OperatingSystem.IsWindows())
         {
-            // Use PowerShell to echo and then sleep
             var startInfo = new ProcessStartInfo
             {
                 FileName = "powershell",
