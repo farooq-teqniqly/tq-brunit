@@ -195,11 +195,23 @@ public sealed class BrunoRunner : IBrunoRunner
             return path;
         }
 
+        // On Windows, npm-installed global packages use .cmd files (batch scripts)
+        // Try .cmd first, then .exe, then use the path as-is (let PATH resolution handle it)
         if (
             OperatingSystem.IsWindows()
             && !path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+            && !path.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)
         )
         {
+            // Check if .cmd exists in common npm global location
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var npmPath = Path.Combine(appData, "npm", path + ".cmd");
+            if (File.Exists(npmPath))
+            {
+                return npmPath;
+            }
+
+            // Fall back to .exe extension (for traditional Windows executables)
             return path + ".exe";
         }
 

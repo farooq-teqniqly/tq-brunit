@@ -175,7 +175,14 @@ public class BrunoRunnerTests
         // Assert
         processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
         Assert.Single(capturedStartInfo);
-        Assert.Equal("bru.exe", capturedStartInfo[0].FileName);
+        // On Windows, npm-installed packages use .cmd files. The resolver checks for .cmd first,
+        // then falls back to .exe. Accept either behavior.
+        var fileName = capturedStartInfo[0].FileName;
+        Assert.True(
+            fileName == "bru.exe"
+                || fileName.EndsWith("bru.cmd", StringComparison.OrdinalIgnoreCase),
+            $"Expected 'bru.exe' or path ending with 'bru.cmd', but got '{fileName}'"
+        );
     }
 
     [SkippableFact]
