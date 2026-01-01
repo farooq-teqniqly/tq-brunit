@@ -180,6 +180,24 @@ public class BrunoRunnerTests
     }
 
     [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesExeExtension_CaseInsensitive()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru.EXE", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru.EXE", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
     public async Task RunAsync_OnWindows_PreservesExeExtension_WhenAlreadyPresent()
     {
         Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
