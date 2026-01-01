@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Reflection;
+using System.Runtime.Versioning;
 using Teqniqly.BRUnit.Testing;
 
 namespace NUnitSample;
@@ -10,6 +12,8 @@ namespace NUnitSample;
 [TestFixture]
 public class BrunoContractTests
 {
+    private static readonly string TargetFrameworkMoniker = GetTargetFrameworkMoniker();
+
     private BrunoRunner _runner = null!;
     private string _collectionPath = null!;
 
@@ -231,7 +235,7 @@ public class BrunoContractTests
         var commonConfigs = new[] { "Debug", "Release" };
         foreach (var config in commonConfigs)
         {
-            var candidatePath = Path.Combine(testHelperBinDir, config, "net10.0", executableName);
+            var candidatePath = Path.Combine(testHelperBinDir, config, TargetFrameworkMoniker, executableName);
 
             if (File.Exists(candidatePath))
             {
@@ -245,17 +249,21 @@ public class BrunoContractTests
             var configDirs = Directory.GetDirectories(testHelperBinDir);
             foreach (var configDir in configDirs)
             {
-                var netDir = Path.Combine(configDir, "net10.0");
+                var netDir = Path.Combine(configDir, TargetFrameworkMoniker);
                 if (Directory.Exists(netDir))
                 {
                     var candidatePath = Path.Combine(netDir, executableName);
                     if (File.Exists(candidatePath))
                     {
-                        return candidatePath;
-                    }
-                }
-            }
         }
+        catch (UnauthorizedAccessException)
+        {
+            // If directory enumeration fails due to permissions, fall through to recursive search
+        }
+        catch (Exception ex) when (ex is IOException or SecurityException)
+        {
+            // If directory enumeration fails, fall through to recursive search
+        }        }
         catch
         {
             // If directory enumeration fails, fall through to recursive search
@@ -283,11 +291,18 @@ public class BrunoContractTests
 
             // Recursively search subdirectories
             var subdirs = Directory.GetDirectories(directory);
-            foreach (var subdir in subdirs)
-            {
-                var result = FindTestHelperRecursive(subdir, fileName);
-                if (result != null)
-                {
+        try
+        {
+            // Recursive search logic here
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Ignore errors during recursive search
+        }
+        catch (Exception ex) when (ex is IOException or SecurityException)
+        {
+            // Ignore I/O and security errors during recursive search
+        }                {
                     return result;
                 }
             }
@@ -298,5 +313,34 @@ public class BrunoContractTests
         }
 
         return null;
+    }
+
+    private static string GetTargetFrameworkMoniker()
+    {
+        var assembly = typeof(BrunoContractTests).Assembly;
+        var targetFrameworkAttribute = assembly.GetCustomAttribute<TargetFrameworkAttribute>();
+
+        if (targetFrameworkAttribute?.FrameworkName != null)
+        {
+            // TargetFrameworkAttribute.FrameworkName format: ".NETCoreApp,Version=v10.0"
+            // Extract the version and convert to TFM format: "net10.0"
+            var frameworkName = targetFrameworkAttribute.FrameworkName;
+
+            // Parse the version from the framework name
+            var versionMatch = System.Text.RegularExpressions.Regex.Match(
+                frameworkName,
+                @"Version=v(\d+)\.(\d+)"
+            );
+
+            if (versionMatch.Success)
+            {
+                var major = versionMatch.Groups[1].Value;
+                var minor = versionMatch.Groups[2].Value;
+                return $"net{major}.{minor}";
+            }
+        }
+
+        // Fallback to hardcoded value if parsing fails
+        return "net10.0";
     }
 }
