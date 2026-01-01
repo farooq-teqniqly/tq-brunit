@@ -1,6 +1,7 @@
 # PBI: Add cross-platform executable resolution and environment name support
 
 **Story ID**: PBI-05  
+**Status**: ✅ **COMPLETED**  
 **Sprint**: 2 weeks  
 **Estimate**: 1 day  
 **Proposal Reference**: [`docs/proposals/BRUNIT_TESTING_CORE_TECHNICAL_PROPOSAL.md`](../proposals/BRUNIT_TESTING_CORE_TECHNICAL_PROPOSAL.md) - Section 5 (BrunoRunOptions), Section 6 (Testing Strategy), Appendix B
@@ -34,28 +35,28 @@ So that **the library works on Windows, Linux, and macOS, and I can specify Brun
 
 ## Acceptance Criteria
 
-- [ ] Executable path resolution adds `.exe` extension on Windows when not present
-- [ ] Executable path resolution preserves explicit paths (with separators)
-- [ ] `EnvironmentName` is passed to Bruno CLI as `--env <name>` argument
-- [ ] `Target` is passed correctly to Bruno CLI
-- [ ] Both file targets (`.bru` files) and folder targets work
-- [ ] Unit tests verify Windows executable resolution
-- [ ] Unit tests verify Linux/macOS executable resolution (or skip on Windows)
-- [ ] Unit tests verify environment name argument building
-- [ ] Unit tests verify target argument building
-- [ ] Integration test verifies environment name usage (if Bruno available)
+- [x] Executable path resolution adds `.exe` extension on Windows when not present
+- [x] Executable path resolution preserves explicit paths (with separators)
+- [x] `EnvironmentName` is passed to Bruno CLI as `--env <name>` argument
+- [x] `Target` is passed correctly to Bruno CLI
+- [x] Both file targets (`.bru` files) and folder targets work
+- [x] Unit tests verify Windows executable resolution
+- [x] Unit tests verify Linux/macOS executable resolution (or skip on Windows)
+- [x] Unit tests verify environment name argument building
+- [x] Unit tests verify target argument building
+- [x] Integration test verifies environment name usage (if Bruno available)
 
 ---
 
 ## Tasks
 
-- Implement `ResolveExecutablePath` method with Windows `.exe` handling
-- Implement `BuildArguments` method to construct Bruno CLI arguments
-- Add `--env` flag support when `EnvironmentName` is provided
-- Add target argument handling
-- Write unit tests for executable resolution
-- Write unit tests for argument building
-- Test on multiple platforms (or document platform-specific behavior)
+- [x] Implement `ResolveExecutablePath` method with Windows `.exe` handling
+- [x] Implement `BuildArguments` method to construct Bruno CLI arguments (using ArgumentList)
+- [x] Add `--env` flag support when `EnvironmentName` is provided
+- [x] Add target argument handling
+- [x] Write unit tests for executable resolution
+- [x] Write unit tests for argument building
+- [x] Test on multiple platforms (or document platform-specific behavior)
 
 ---
 
