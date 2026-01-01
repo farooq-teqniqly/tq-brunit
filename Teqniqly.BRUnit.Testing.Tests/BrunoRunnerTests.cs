@@ -124,6 +124,117 @@ public class BrunoRunnerTests
         Assert.Equal("test folder/test file.bru", capturedStartInfo[0].ArgumentList[3]);
     }
 
+    [SkippableFact]
+    public async Task RunAsync_OnUnix_DoesNotAddExeExtension()
+    {
+        Skip.If(OperatingSystem.IsWindows(), "Unix-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnUnix_PreservesExplicitPath()
+    {
+        Skip.If(OperatingSystem.IsWindows(), "Unix-specific test");
+
+        // Arrange
+        var explicitPath = Path.Combine("usr", "bin", "bru");
+        var options = new BrunoRunOptions { BruExecutablePath = explicitPath, Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(explicitPath, capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_AddsExeExtension_WhenNotPresent()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru.exe", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesExeExtension_WhenAlreadyPresent()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var options = new BrunoRunOptions { BruExecutablePath = "bru.exe", Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal("bru.exe", capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesExplicitPath_WithSeparators()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var explicitPath = Path.Combine("Program Files", "bru", "bru");
+        var options = new BrunoRunOptions { BruExecutablePath = explicitPath, Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(explicitPath, capturedStartInfo[0].FileName);
+    }
+
+    [SkippableFact]
+    public async Task RunAsync_OnWindows_PreservesRootedPath()
+    {
+        Skip.If(!OperatingSystem.IsWindows(), "Windows-specific test");
+
+        // Arrange
+        var rootedPath = Path.Combine("C:", "Program Files", "bru", "bru.exe");
+        var options = new BrunoRunOptions { BruExecutablePath = rootedPath, Target = "test.bru" };
+        var (processFactory, runner, capturedStartInfo) = SetupProcessFactoryMock();
+
+        // Act
+        await runner.RunAsync(options).ConfigureAwait(false);
+
+        // Assert
+        processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
+        Assert.Single(capturedStartInfo);
+        Assert.Equal(rootedPath, capturedStartInfo[0].FileName);
+    }
+
     [Fact]
     public async Task RunAsync_WhenBrunoFails_ReturnsNonZeroExitCode()
     {
