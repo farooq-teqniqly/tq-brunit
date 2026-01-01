@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using NSubstitute;
@@ -13,11 +12,8 @@ public class BrunoRunnerTests
     private static readonly TimeSpan TimeoutForTesting = TimeSpan.FromMilliseconds(100);
 
     [Fact]
-    public void Constructor_WithNullProcessFactory_ThrowsArgumentNullException()
-    {
-        // Act & Assert
+    public void Constructor_WithNullProcessFactory_ThrowsArgumentNullException() =>
         Assert.Throws<ArgumentNullException>(() => new BrunoRunner(null!));
-    }
 
     [Fact]
     public async Task RunAsync_BuildsCorrectArguments_WithEnvironmentName()
