@@ -204,11 +204,18 @@ public sealed class BrunoRunner : IBrunoRunner
         )
         {
             // Check if .cmd exists in common npm global location
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var npmPath = Path.Combine(appData, "npm", path + ".cmd");
-            if (File.Exists(npmPath))
+            try
             {
-                return npmPath;
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var npmPath = Path.Combine(appData, "npm", path + ".cmd");
+                if (File.Exists(npmPath))
+                {
+                    return npmPath;
+                }
+            }
+            catch (Exception)
+            {
+                // If we can't check the npm location, fall back to .exe
             }
 
             // Fall back to .exe extension (for traditional Windows executables)

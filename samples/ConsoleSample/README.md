@@ -31,12 +31,6 @@ This sample demonstrates how to use `Teqniqly.BRUnit.Testing` to run Bruno CLI c
 
 4. Create an environment file (e.g., `Local.bru`) with:
 
-   ```json
-   {
-     "base_url": "https://jsonplaceholder.typicode.com"
-   }
-   ```
-
 Alternatively, you can use an existing Bruno collection by updating the `Target` path in `Program.cs`.
 
 ## Running the Sample
