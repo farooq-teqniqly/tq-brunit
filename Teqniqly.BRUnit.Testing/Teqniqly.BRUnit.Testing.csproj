@@ -7,6 +7,7 @@
     <Description>A library for running Bruno CLI tests.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/farooq-teqniqly/tq-brunit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>bruno;testing;cli</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
