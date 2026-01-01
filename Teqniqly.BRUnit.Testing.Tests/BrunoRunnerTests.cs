@@ -116,7 +116,6 @@ public class BrunoRunnerTests
         // Assert
         processFactory.Received(1).Start(Arg.Any<ProcessStartInfo>());
         Assert.Single(capturedStartInfo);
-        // Arguments in ArgumentList (runtime handles escaping)
         Assert.Equal(4, capturedStartInfo[0].ArgumentList.Count);
         Assert.Equal("run", capturedStartInfo[0].ArgumentList[0]);
         Assert.Equal("--env", capturedStartInfo[0].ArgumentList[1]);
@@ -342,7 +341,6 @@ public class BrunoRunnerTests
             var elapsed = DateTime.UtcNow - startTime;
 
             // Assert
-            // If the process wasn't killed, this test would take much longer
             Assert.True(elapsed.TotalSeconds < 2, "Process should have been killed quickly");
 
             try
@@ -352,7 +350,7 @@ public class BrunoRunnerTests
             }
             catch (InvalidOperationException)
             {
-                // Process already exited/killed - this is expected
+                // Process already exited/killed - expected
             }
         }
         finally
@@ -560,8 +558,6 @@ public class BrunoRunnerTests
         var result = await runner.RunAsync(options).ConfigureAwait(false);
 
         // Assert
-        // The command should succeed (exit code 0) because -h is a help flag
-        // This verifies that the --env flag is correctly passed to Bruno CLI
         Assert.True(result.IsSuccess);
         Assert.Equal(0, result.ExitCode);
         Assert.NotEmpty(result.StandardOutput);
@@ -654,12 +650,9 @@ public class BrunoRunnerTests
 
     private static Process CreateHangingProcess()
     {
-        // Create a process that will hang (sleep for a long time)
-        // Use ping on Windows (takes ~10 seconds for 11 pings) or sleep on Unix
         var processFactory = new ProcessFactory();
         if (OperatingSystem.IsWindows())
         {
-            // ping -n 11 127.0.0.1 takes about 10 seconds (11 pings with 1 second intervals)
             var startInfo = new ProcessStartInfo
             {
                 FileName = "ping",
@@ -688,11 +681,9 @@ public class BrunoRunnerTests
 
     private static Process CreateHangingProcessWithOutput()
     {
-        // Create a process that writes output and then hangs
         var processFactory = new ProcessFactory();
         if (OperatingSystem.IsWindows())
         {
-            // Use PowerShell to echo and then sleep
             var startInfo = new ProcessStartInfo
             {
                 FileName = "powershell",

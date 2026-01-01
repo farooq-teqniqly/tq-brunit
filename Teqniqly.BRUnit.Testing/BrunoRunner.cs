@@ -186,7 +186,6 @@ public sealed class BrunoRunner : IBrunoRunner
 
     private static string ResolveExecutablePath(string path)
     {
-        // If path contains directory separators or is rooted, use as-is
         if (
             Path.IsPathRooted(path)
             || path.Contains(Path.DirectorySeparatorChar, StringComparison.Ordinal)
@@ -196,7 +195,6 @@ public sealed class BrunoRunner : IBrunoRunner
             return path;
         }
 
-        // On Windows, add .exe extension if not already present
         if (
             OperatingSystem.IsWindows()
             && !path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
