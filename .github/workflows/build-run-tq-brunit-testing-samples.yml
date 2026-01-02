@@ -29,7 +29,9 @@ jobs:
           echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
 
       - name: Verify Bruno CLI installation
-        run: bruno --version
+        run: |
+          which bru
+          bru --version
 
       - name: Build and Run Samples
         timeout-minutes: 10
