@@ -213,7 +213,9 @@ public sealed class BrunoRunner : IBrunoRunner
                     return npmPath;
                 }
             }
+#pragma warning disable CA1031
             catch (Exception)
+#pragma warning restore CA1031
             {
                 // If we can't check the npm location, fall back to .exe
             }
