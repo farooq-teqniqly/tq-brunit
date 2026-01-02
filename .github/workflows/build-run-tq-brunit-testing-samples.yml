@@ -15,14 +15,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET 10.0
+      - name: Setup .NET 9.0
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
+          dotnet-version: "9.0.x"
 
-      - name: Restore dependencies
-        run: dotnet restore
-
+      - name: Restore sample projects
+        run: |
+          dotnet restore samples/ConsoleSample/ConsoleSample.csproj
+          dotnet restore samples/TestHelper/TestHelper.csproj
+          dotnet restore samples/NUnitSample/NUnitSample.csproj
+          dotnet restore samples/XUnitSample/XUnitSample.csproj
       - name: Install Bruno CLI
         run: |
           npm install -g @usebruno/cli@2.15 --ignore-scripts
