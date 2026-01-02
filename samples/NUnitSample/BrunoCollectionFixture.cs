@@ -10,7 +10,6 @@ public sealed class BrunoCollectionFixture
 
     public BrunoCollectionFixture()
     {
-        // Navigate up from the assembly location to find the samples directory
         var assemblyLocation = Path.GetDirectoryName(
             typeof(BrunoCollectionFixture).Assembly.Location
         );

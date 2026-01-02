@@ -207,7 +207,6 @@ public class BrunoContractTests
 
     private static string? GetTestHelperPath()
     {
-        // Navigate from test assembly location to find TestHelper executable
         var assemblyLocation = Path.GetDirectoryName(typeof(BrunoContractTests).Assembly.Location);
         if (assemblyLocation == null)
         {
@@ -287,14 +286,12 @@ public class BrunoContractTests
 
         try
         {
-            // Check current directory for the executable
             var candidatePath = Path.Combine(directory, fileName);
             if (File.Exists(candidatePath))
             {
                 return candidatePath;
             }
 
-            // Recursively search subdirectories
             var subdirs = Directory.GetDirectories(directory);
             foreach (var subdir in subdirs)
             {
@@ -308,7 +305,7 @@ public class BrunoContractTests
         catch (Exception ex)
             when (ex is UnauthorizedAccessException or IOException or SecurityException)
         {
-            // Ignore errors during recursive search
+            // Expected - ignore errors during recursive search
         }
 
         return null;

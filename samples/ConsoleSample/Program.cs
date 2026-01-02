@@ -14,7 +14,7 @@ var runner = new BrunoRunner(new ProcessFactory());
 var collectionPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "bruno-collection");
 var basicOptions = new BrunoRunOptions
 {
-    Target = "requests", // Run requests folder
+    Target = "requests",
     EnvironmentName = "Local", // Use Local environment for variable resolution
     WorkingDirectory = collectionPath,
 };
@@ -52,8 +52,8 @@ catch (InvalidOperationException ex)
 // Example 2: Using environment name
 var envOptions = new BrunoRunOptions
 {
-    Target = "requests", // Run requests folder
-    EnvironmentName = "production", // Bruno environment name
+    Target = "requests",
+    EnvironmentName = "production",
     WorkingDirectory = collectionPath,
 };
 
@@ -66,7 +66,7 @@ Console.WriteLine($"Result: {(envResult.IsSuccess ? "Success" : "Failed")}");
 // Bruno environment variables are defined in environments/*.bru files.
 var envVarOptions = new BrunoRunOptions
 {
-    Target = "requests", // Run requests folder
+    Target = "requests",
     EnvironmentName = "Local", // Still need Bruno environment for {{base_url}}
     EnvironmentVariables = ImmutableDictionary<string, string?>
         .Empty.Add("API_BASE_URL", "https://jsonplaceholder.typicode.com")
@@ -81,7 +81,7 @@ Console.WriteLine($"Result: {(envVarResult.IsSuccess ? "Success" : "Failed")}");
 // Example 4: Custom timeout
 var timeoutOptions = new BrunoRunOptions
 {
-    Target = "requests", // Run requests folder
+    Target = "requests",
     EnvironmentName = "Local", // Need environment for variable resolution
     Timeout = TimeSpan.FromMinutes(5),
     WorkingDirectory = collectionPath,

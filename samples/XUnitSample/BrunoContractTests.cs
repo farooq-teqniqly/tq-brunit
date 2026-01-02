@@ -128,14 +128,12 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
         );
     private static string? GetTestHelperPath()
     {
-        // Navigate from test assembly location to find TestHelper executable
         var assemblyLocation = Path.GetDirectoryName(typeof(BrunoContractTests).Assembly.Location);
         if (assemblyLocation == null)
         {
             return null;
         }
 
-        // Go up from bin/Debug/net10.0 to samples directory
         var currentDir = assemblyLocation;
         for (var i = 0; i < 4 && currentDir != null; i++)
         {
