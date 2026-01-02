@@ -49,7 +49,10 @@ jobs:
       - name: Build and Run Samples
         run: |
           # Build all sample projects
-          dotnet build samples/**/*.csproj --configuration Release --no-restore
+          dotnet build samples/ConsoleSample/ConsoleSample.csproj --configuration Release --no-restore
+          dotnet build samples/TestHelper/TestHelper.csproj --configuration Release --no-restore
+          dotnet build samples/NUnitSample/NUnitSample.csproj --configuration Release --no-restore
+          dotnet build samples/XUnitSample/XUnitSample.csproj --configuration Release --no-restore
 
           # Run test projects
           dotnet test samples/NUnitSample/NUnitSample.csproj --configuration Release --no-build
