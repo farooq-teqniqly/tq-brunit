@@ -1,4 +1,4 @@
-name: Build and Test BRUnit.Testing Samples
+name: Build and Run BRUnit.Testing Samples
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test-samples:
-    name: Test Samples
+    name: Build and Run Samples
     runs-on: ubuntu-latest
 
     steps:
