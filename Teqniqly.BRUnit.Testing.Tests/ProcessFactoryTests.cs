@@ -3,9 +3,6 @@ using System.IO;
 
 namespace Teqniqly.BRUnit.Testing.Tests;
 
-// Reference: Story AC: PBI-03 (ProcessFactory implementation)
-// Reference: Proposal: Section 5 (Contracts - ProcessFactory)
-
 public class ProcessFactoryTests
 {
     [Fact]

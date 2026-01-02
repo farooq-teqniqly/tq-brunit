@@ -2,10 +2,6 @@ using System.Collections.Immutable;
 
 namespace Teqniqly.BRUnit.Testing.Tests;
 
-// Reference: Story AC: PBI-02 AC-40 (default values)
-// Reference: Proposal: Section 5 (Contracts - BrunoRunOptions)
-// Reference: Spec: Section 4 (Core API - BrunoRunOptions)
-
 public class BrunoRunOptionsTests
 {
     [Fact]
@@ -30,10 +26,6 @@ public class BrunoRunOptionsTests
         Assert.Equal("value1", envVarsWithValue["TEST"]);
         Assert.True(options.EnvironmentVariables.IsEmpty);
     }
-
-    // Note: Immutability (AC-44) is enforced at compile-time by the record type and init-only accessors.
-    // The compiler prevents assignment after object initialization, so runtime tests are not needed.
-    // Value preservation is already verified in DefaultValues_AreCorrect().
 
     [Fact]
     public void Equals_WithDifferentEnvironmentVariables_ReturnsFalse()
@@ -73,8 +65,6 @@ public class BrunoRunOptionsTests
         Assert.True(options1 != options2);
     }
 
-    // Reference: Story AC: PBI-02 AC-48 (value equality)
-    // Reference: Proposal: Section 5 (Contracts - BrunoRunOptions)
     [Fact]
     public void Equals_WithSameValues_ReturnsTrue()
     {
