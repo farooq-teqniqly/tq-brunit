@@ -40,7 +40,7 @@ jobs:
 
       - name: Install Bruno CLI
         run: |
-          npm install -g @usebruno/cli
+          npm install -g @usebruno/cli@2.x.x
           echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
 
       - name: Verify Bruno CLI installation
@@ -65,7 +65,6 @@ jobs:
           name: build-artifacts-${{ matrix.dotnet-version }}
           path: |
             ${{env.PROJECT_NAME}}/bin/Release/
-            ${{env.PROJECT_NAME}}/obj/Release/
           retention-days: 1
 
   sonarqube-analysis:
