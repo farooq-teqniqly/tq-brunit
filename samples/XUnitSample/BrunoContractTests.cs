@@ -111,7 +111,7 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
         );
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RunCollection_WhenTimeoutExceeded_ThrowsTimeoutException()
     {
         // Arrange
