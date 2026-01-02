@@ -32,7 +32,9 @@ jobs:
         run: bruno --version
 
       - name: Build and Run Samples
+        timeout-minutes: 10
         run: |
+          set -e
           # Build all sample projects
           dotnet build samples/ConsoleSample/ConsoleSample.csproj --configuration Release --no-restore
           dotnet build samples/TestHelper/TestHelper.csproj --configuration Release --no-restore
@@ -44,5 +46,6 @@ jobs:
           dotnet test samples/XUnitSample/XUnitSample.csproj --configuration Release --no-build
 
           # Run console applications
+          # Run TestHelper with 0 second sleep duration
           dotnet run --project samples/TestHelper/TestHelper.csproj --configuration Release --no-build -- 0
           dotnet run --project samples/ConsoleSample/ConsoleSample.csproj --configuration Release --no-build
