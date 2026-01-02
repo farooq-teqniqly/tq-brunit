@@ -119,13 +119,12 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
         var shortTimeout = TimeSpan.FromMilliseconds(200);
         var testHelperPath = GetTestHelperPath();
 
-        if (testHelperPath == null || !File.Exists(testHelperPath))
-        {
-            throw new InvalidOperationException(
-                $"TestHelper executable not found at: {testHelperPath}. "
-                    + "Make sure TestHelper project is built before running tests."
-            );
-        }
+        Skip.If(
+            testHelperPath == null || !File.Exists(testHelperPath),
+            $"TestHelper executable not found at: {testHelperPath}. "
+                + "Make sure TestHelper project is built before running tests. "
+                + "Build the TestHelper project: dotnet build samples/TestHelper/TestHelper.csproj"
+        );
 
         // TestHelper sleeps for 5 seconds, which exceeds the 200ms timeout
         // BrunoRunner will call: TestHelper.exe run 5
