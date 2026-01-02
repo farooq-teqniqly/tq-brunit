@@ -82,7 +82,7 @@ Console.WriteLine($"Result: {(envVarResult.IsSuccess ? "Success" : "Failed")}");
 var timeoutOptions = new BrunoRunOptions
 {
     Target = "requests",
-    EnvironmentName = "Local", // Need environment for variable resolution
+    EnvironmentName = "Local",
     Timeout = TimeSpan.FromMinutes(5),
     WorkingDirectory = collectionPath,
 };

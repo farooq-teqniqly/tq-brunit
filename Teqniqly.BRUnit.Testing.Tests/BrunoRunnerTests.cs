@@ -178,10 +178,11 @@ public class BrunoRunnerTests
         // On Windows, npm-installed packages use .cmd files. The resolver checks for .cmd first,
         // then falls back to .exe. Accept either behavior.
         var fileName = capturedStartInfo[0].FileName;
+        var actualFileName = Path.GetFileName(fileName);
         Assert.True(
             fileName == "bru.exe"
-                || fileName.EndsWith("bru.cmd", StringComparison.OrdinalIgnoreCase),
-            $"Expected 'bru.exe' or path ending with 'bru.cmd', but got '{fileName}'"
+                || string.Equals(actualFileName, "bru.cmd", StringComparison.OrdinalIgnoreCase),
+            $"Expected 'bru.exe' or path with filename 'bru.cmd', but got '{fileName}'"
         );
     }
 

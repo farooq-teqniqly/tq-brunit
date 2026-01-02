@@ -105,7 +105,7 @@ var result = await runner.RunAsync(options);
 
 Pass environment variables to the Bruno process for dynamic configuration:
 
-````csharp
+```csharp
 using System.Collections.Immutable;
 
 var envVars = new Dictionary<string, string?>
@@ -121,6 +121,8 @@ var options = new BrunoRunOptions
 };
 
 var result = await runner.RunAsync(options);
+```
+
 ### Custom Timeout
 
 Configure a custom timeout for long-running tests:
@@ -133,7 +135,7 @@ var options = new BrunoRunOptions
 };
 
 var result = await runner.RunAsync(options);
-````
+```
 
 ### Complete Example
 
@@ -186,6 +188,16 @@ catch (InvalidOperationException ex)
 
 **Note:** The examples above use [JSONPlaceholder](https://jsonplaceholder.typicode.com) - a free fake REST API perfect for testing. You can create a Bruno collection that tests endpoints like `GET /posts/1`, `POST /posts`, etc.
 
+## Sample Projects
+
+This repository includes complete, runnable sample projects demonstrating how to use `Teqniqly.BRUnit.Testing`:
+
+- **[ConsoleSample](samples/ConsoleSample/)** - A console application demonstrating basic usage, environment variables, and timeout configuration
+- **[XUnitSample](samples/XUnitSample/)** - XUnit test project showing how to integrate Bruno contract tests into your test suite
+- **[NUnitSample](samples/NUnitSample/)** - NUnit test project demonstrating the same integration patterns with NUnit
+
+Each sample includes a README with setup instructions and usage examples. The samples use a shared Bruno collection located at `samples/bruno-collection` that tests against the JSONPlaceholder API.
+
 ## API Reference
 
 The library provides the following main types:
@@ -206,3 +218,7 @@ For detailed technical information, architecture decisions, and design rationale
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+```
+
+```

@@ -40,7 +40,7 @@ public class BrunoContractTests
         };
 
         // Act
-        var result = await _runner.RunAsync(options);
+        var result = await _runner.RunAsync(options).ConfigureAwait(false);
 
         // Assert
         Assert.That(result.IsSuccess, Is.True, $"Tests failed: {result.StandardError}");
@@ -60,7 +60,7 @@ public class BrunoContractTests
         };
 
         // Act
-        var result = await _runner.RunAsync(options);
+        var result = await _runner.RunAsync(options).ConfigureAwait(false);
 
         // Assert
         Assert.That(result.IsSuccess, Is.True);
@@ -82,7 +82,7 @@ public class BrunoContractTests
         };
 
         // Act
-        var result = await _runner.RunAsync(options);
+        var result = await _runner.RunAsync(options).ConfigureAwait(false);
 
         // Assert
         Assert.That(result.IsSuccess, Is.True);
@@ -103,7 +103,7 @@ public class BrunoContractTests
 
         // Act
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var result = await _runner.RunAsync(options);
+        var result = await _runner.RunAsync(options).ConfigureAwait(false);
         stopwatch.Stop();
 
         // Assert
@@ -144,7 +144,7 @@ public class BrunoContractTests
         // Act
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var exception = Assert.ThrowsAsync<TimeoutException>(async () =>
-            await _runner.RunAsync(options)
+            await _runner.RunAsync(options).ConfigureAwait(false)
         );
         stopwatch.Stop();
 
@@ -182,7 +182,7 @@ public class BrunoContractTests
         };
 
         // Act
-        var result = await _runner.RunAsync(options);
+        var result = await _runner.RunAsync(options).ConfigureAwait(false);
 
         // Assert
         Assert.That(result.IsSuccess, Is.False);
@@ -213,7 +213,6 @@ public class BrunoContractTests
             return null;
         }
 
-        // Go up from bin/Debug/net10.0 to samples directory
         var currentDir = assemblyLocation;
         for (var i = 0; i < 4 && currentDir != null; i++)
         {
