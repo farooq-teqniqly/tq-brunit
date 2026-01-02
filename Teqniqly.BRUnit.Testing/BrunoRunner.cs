@@ -195,11 +195,37 @@ public sealed class BrunoRunner : IBrunoRunner
             return path;
         }
 
+        // On Windows, npm-installed global packages use .cmd files (batch scripts)
+        // Strategy: Check for .cmd in default npm location (%APPDATA%\npm), then fall back to .exe
+        // Note: This assumes default npm installation. If npm uses a custom prefix, the .cmd check
+        // will fail and we'll append .exe (which won't work for npm packages that only have .cmd files).
+        // In that case, the executable must be specified with full path or .cmd extension.
         if (
             OperatingSystem.IsWindows()
             && !path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+            && !path.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)
         )
         {
+            // Check if .cmd exists in default npm global location (%APPDATA%\npm)
+            try
+            {
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                var npmPath = Path.Combine(appData, "npm", path + ".cmd");
+                if (File.Exists(npmPath))
+                {
+                    return npmPath;
+                }
+            }
+#pragma warning disable CA1031
+            catch (Exception)
+#pragma warning restore CA1031
+            {
+                // If we can't check the npm location, fall back to .exe
+            }
+
+            // Fall back to .exe extension (for traditional Windows executables)
+            // Note: This won't work for npm-installed packages if the AppData check failed,
+            // as npm packages only provide .cmd files, not .exe files.
             return path + ".exe";
         }
 

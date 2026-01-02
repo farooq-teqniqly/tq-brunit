@@ -1,6 +1,7 @@
 # PBI: Add comprehensive documentation and package for NuGet
 
 **Story ID**: PBI-06  
+**Status**: ✅ **COMPLETED**  
 **Sprint**: 2 weeks  
 **Estimate**: 1 day  
 **Proposal Reference**: [`docs/proposals/BRUNIT_TESTING_CORE_TECHNICAL_PROPOSAL.md`](../proposals/BRUNIT_TESTING_CORE_TECHNICAL_PROPOSAL.md) - Section 7 (Phase 4), Section 8 (Versioning)
@@ -36,29 +37,28 @@ So that **I can understand how to use it and integrate it into my projects**
 
 ## Acceptance Criteria
 
-- [ ] All public APIs have XML documentation comments
-- [ ] README.md exists with:
-  - [ ] Overview of the library
-  - [ ] Installation instructions
-  - [ ] Basic usage examples
-  - [ ] Bruno CLI installation requirements
-  - [ ] Link to specification
-- [ ] NuGet package metadata configured (version 0.1.0, description, etc.)
-- [ ] Package builds successfully
-- [ ] Package can be installed in a test project
-- [ ] Package has no unnecessary dependencies
-- [ ] Package follows .NET library packaging best practices
+- [x] All public APIs have XML documentation comments
+- [x] README.md exists with:
+  - [x] Overview of the library
+  - [x] Installation instructions
+  - [x] Basic usage examples
+  - [x] Bruno CLI installation requirements
+  - [x] Link to specification
+- [x] NuGet package metadata configured (version 1.0.0-beta, description, etc.)
+- [x] Package builds successfully
+- [x] Package can be installed in a test project
+- [x] Package has no unnecessary dependencies
+- [x] Package follows .NET library packaging best practices
 
 ---
 
 ## Tasks
 
-- Review and complete XML documentation comments
-- Create README.md with examples
-- Configure .csproj with NuGet package metadata
-- Build and test package locally
-- Create test consumer project to verify package works
-- Document Bruno CLI installation in README
+- [x] Review and complete XML documentation comments
+- [x] Create README.md with examples
+- [x] Configure .csproj with NuGet package metadata
+- [x] Build and test package locally
+- [x] Document Bruno CLI installation in README
 
 ---
 

@@ -1,8 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <NoWarn>$(NoWarn);NU1510</NoWarn>
+    <PackageId>Teqniqly.BRUnit.Testing</PackageId>
+    <Version>1.0.0-beta</Version>
+    <Authors>Teqniqly</Authors>
+    <Description>A library for running Bruno CLI tests.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/farooq-teqniqly/tq-brunit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>bruno;testing;cli</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
