@@ -1,0 +1,51 @@
+name: Build and Run BRUnit.Testing Samples
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-samples:
+    name: Build and Run Samples
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Install Bruno CLI
+        run: |
+          npm install -g @usebruno/cli@2.15
+          echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
+
+      - name: Verify Bruno CLI installation
+        run: bruno --version
+
+      - name: Build and Run Samples
+        timeout-minutes: 10
+        run: |
+          set -e
+          # Build all sample projects
+          dotnet build samples/ConsoleSample/ConsoleSample.csproj --configuration Release --no-restore
+          dotnet build samples/TestHelper/TestHelper.csproj --configuration Release --no-restore
+          dotnet build samples/NUnitSample/NUnitSample.csproj --configuration Release --no-restore
+          dotnet build samples/XUnitSample/XUnitSample.csproj --configuration Release --no-restore
+
+          # Run test projects
+          dotnet test samples/NUnitSample/NUnitSample.csproj --configuration Release --no-build
+          dotnet test samples/XUnitSample/XUnitSample.csproj --configuration Release --no-build
+
+          # Run console applications
+          # Run TestHelper with 0 second sleep duration
+          dotnet run --project samples/TestHelper/TestHelper.csproj --configuration Release --no-build -- 0
+          dotnet run --project samples/ConsoleSample/ConsoleSample.csproj --configuration Release --no-build
