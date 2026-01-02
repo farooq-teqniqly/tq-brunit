@@ -68,6 +68,7 @@ jobs:
           name: build-artifacts-${{ matrix.dotnet-version }}
           path: |
             ${{env.PROJECT_NAME}}/bin/Release/
+            ${{env.PROJECT_NAME}}/obj/Release/
           retention-days: 1
 
   sonarqube-analysis:
@@ -169,7 +170,7 @@ jobs:
         run: dotnet restore ${{env.PROJECT_NAME}}/${{env.PROJECT_NAME}}.csproj
 
       - name: Pack NuGet package
-        run: dotnet pack ${{env.PROJECT_NAME}}/${{env.PROJECT_NAME}}.csproj --configuration Release --no-restore --output ./nupkg /p:PackageVersion=${{ steps.version.outputs.version }}
+        run: dotnet pack ${{env.PROJECT_NAME}}/${{env.PROJECT_NAME}}.csproj --configuration Release --no-restore --no-build --output ./nupkg /p:PackageVersion=${{ steps.version.outputs.version }}
 
       - name: Push to NuGet
         env:
