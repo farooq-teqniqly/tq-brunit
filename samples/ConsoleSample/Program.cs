@@ -9,6 +9,7 @@ using Teqniqly.BRUnit.Testing;
 // 2. A Bruno collection file or folder must exist (see README.md in this folder)
 
 var runner = new BrunoRunner(new ProcessFactory());
+bool hasFailure = false;
 
 // Example 1: Basic usage with a Bruno collection
 var collectionPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "bruno-collection");
@@ -58,11 +59,32 @@ var envOptions = new BrunoRunOptions
 };
 
 Console.WriteLine("\nRunning with environment name...");
-var envResult = await runner.RunAsync(envOptions).ConfigureAwait(false);
-Console.WriteLine($"Result: {(envResult.IsSuccess ? "Success" : "Failed")}");
+try
+{
+    var envResult = await runner.RunAsync(envOptions).ConfigureAwait(false);
+    if (!envResult.IsSuccess)
+    {
+        Console.WriteLine($"Result: Failed (exit code: {envResult.ExitCode})");
+        Console.WriteLine(envResult.StandardError);
+        hasFailure = true;
+    }
+    else
+    {
+        Console.WriteLine("Result: Success");
+    }
+}
+catch (TimeoutException ex)
+{
+    Console.WriteLine($"⏱️ Test execution timed out: {ex.Message}");
+    hasFailure = true;
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"❌ Failed to start Bruno CLI: {ex.Message}");
+    hasFailure = true;
+}
 
 // Example 3: Passing environment variables (process-level, not Bruno env vars)
-// Note: These are process environment variables, not Bruno environment variables.
 // Bruno environment variables are defined in environments/*.bru files.
 var envVarOptions = new BrunoRunOptions
 {
@@ -75,8 +97,30 @@ var envVarOptions = new BrunoRunOptions
 };
 
 Console.WriteLine("\nRunning with environment variables...");
-var envVarResult = await runner.RunAsync(envVarOptions).ConfigureAwait(false);
-Console.WriteLine($"Result: {(envVarResult.IsSuccess ? "Success" : "Failed")}");
+try
+{
+    var envVarResult = await runner.RunAsync(envVarOptions).ConfigureAwait(false);
+    if (!envVarResult.IsSuccess)
+    {
+        Console.WriteLine($"Result: Failed (exit code: {envVarResult.ExitCode})");
+        Console.WriteLine(envVarResult.StandardError);
+        hasFailure = true;
+    }
+    else
+    {
+        Console.WriteLine("Result: Success");
+    }
+}
+catch (TimeoutException ex)
+{
+    Console.WriteLine($"⏱️ Test execution timed out: {ex.Message}");
+    hasFailure = true;
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"❌ Failed to start Bruno CLI: {ex.Message}");
+    hasFailure = true;
+}
 
 // Example 4: Custom timeout
 var timeoutOptions = new BrunoRunOptions
@@ -88,7 +132,35 @@ var timeoutOptions = new BrunoRunOptions
 };
 
 Console.WriteLine("\nRunning with custom timeout...");
-var timeoutResult = await runner.RunAsync(timeoutOptions).ConfigureAwait(false);
-Console.WriteLine($"Result: {(timeoutResult.IsSuccess ? "Success" : "Failed")}");
+try
+{
+    var timeoutResult = await runner.RunAsync(timeoutOptions).ConfigureAwait(false);
+    if (!timeoutResult.IsSuccess)
+    {
+        Console.WriteLine($"Result: Failed (exit code: {timeoutResult.ExitCode})");
+        Console.WriteLine(timeoutResult.StandardError);
+        hasFailure = true;
+    }
+    else
+    {
+        Console.WriteLine("Result: Success");
+    }
+}
+catch (TimeoutException ex)
+{
+    Console.WriteLine($"⏱️ Test execution timed out: {ex.Message}");
+    hasFailure = true;
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"❌ Failed to start Bruno CLI: {ex.Message}");
+    hasFailure = true;
+}
+
+if (hasFailure)
+{
+    Console.WriteLine("\n❌ Console sample completed with failures!");
+    Environment.Exit(1);
+}
 
 Console.WriteLine("\n✅ Console sample completed!");
