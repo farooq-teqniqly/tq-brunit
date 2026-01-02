@@ -268,11 +268,8 @@ public class BrunoContractTests
                 }
             }
         }
-        catch (UnauthorizedAccessException)
-        {
-            // If directory enumeration fails due to permissions, fall through to recursive search
-        }
-        catch (Exception ex) when (ex is IOException or SecurityException)
+        catch (Exception ex)
+            when (ex is UnauthorizedAccessException or IOException or SecurityException)
         {
             // If directory enumeration fails, fall through to recursive search
         }
@@ -308,13 +305,10 @@ public class BrunoContractTests
                 }
             }
         }
-        catch (UnauthorizedAccessException)
+        catch (Exception ex)
+            when (ex is UnauthorizedAccessException or IOException or SecurityException)
         {
             // Ignore errors during recursive search
-        }
-        catch (Exception ex) when (ex is IOException or SecurityException)
-        {
-            // Ignore I/O and security errors during recursive search
         }
 
         return null;
