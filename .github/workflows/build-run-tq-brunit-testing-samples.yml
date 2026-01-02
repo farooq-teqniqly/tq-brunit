@@ -20,12 +20,6 @@ jobs:
         with:
           dotnet-version: "9.0.x"
 
-      - name: Restore sample projects
-        run: |
-          dotnet restore samples/ConsoleSample/ConsoleSample.csproj
-          dotnet restore samples/TestHelper/TestHelper.csproj
-          dotnet restore samples/NUnitSample/NUnitSample.csproj
-          dotnet restore samples/XUnitSample/XUnitSample.csproj
       - name: Install Bruno CLI
         run: |
           npm install -g @usebruno/cli@2.15 --ignore-scripts
@@ -41,10 +35,10 @@ jobs:
         run: |
           set -e
           # Build all sample projects
-          dotnet build samples/ConsoleSample/ConsoleSample.csproj --configuration Release --no-restore
-          dotnet build samples/TestHelper/TestHelper.csproj --configuration Release --no-restore
-          dotnet build samples/NUnitSample/NUnitSample.csproj --configuration Release --no-restore
-          dotnet build samples/XUnitSample/XUnitSample.csproj --configuration Release --no-restore
+          dotnet build samples/ConsoleSample/ConsoleSample.csproj --configuration Release
+          dotnet build samples/TestHelper/TestHelper.csproj --configuration Release
+          dotnet build samples/NUnitSample/NUnitSample.csproj --configuration Release
+          dotnet build samples/XUnitSample/XUnitSample.csproj --configuration Release
 
           # Run test projects
           dotnet test samples/NUnitSample/NUnitSample.csproj --configuration Release --no-build
