@@ -1,9 +1,5 @@
 namespace Teqniqly.BRUnit.Testing.Tests;
 
-// Reference: Story AC: PBI-02 AC-41 (BrunoRunResult is sealed record with all properties)
-// Reference: Proposal: Section 5 (Contracts - BrunoRunResult)
-// Reference: Spec: Section 4 (Core API - BrunoRunResult)
-
 public class BrunoRunResultTests
 {
     [Fact]
@@ -36,8 +32,6 @@ public class BrunoRunResultTests
         Assert.True(result1 != result2);
     }
 
-    // Reference: Story AC: PBI-02 AC-48 (value equality)
-    // Reference: Proposal: Section 5 (Contracts - BrunoRunResult)
     [Fact]
     public void Equals_WithSameValues_ReturnsTrue()
     {
@@ -61,8 +55,6 @@ public class BrunoRunResultTests
         Assert.False(result1 != result2);
     }
 
-    // Note: Immutability (AC-44) is enforced at compile-time by the record type and init-only accessors.
-    // The compiler prevents assignment after object initialization, so runtime tests are not needed.
     [Fact]
     public void GetHashCode_WithSameValues_ReturnsSameHash()
     {
@@ -84,8 +76,6 @@ public class BrunoRunResultTests
         Assert.Equal(result1.GetHashCode(), result2.GetHashCode());
     }
 
-    // Reference: Story AC: PBI-02 AC-42, AC-43 (IsSuccess logic)
-    // Reference: Proposal: Section 5 (Contracts - BrunoRunResult)
     [Fact]
     public void IsSuccess_WithExitCodeZero_ReturnsTrue()
     {

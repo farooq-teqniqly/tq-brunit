@@ -4,9 +4,6 @@ using NSubstitute;
 
 namespace Teqniqly.BRUnit.Testing.Tests;
 
-// Reference: Story AC: PBI-03 AC-42 (BrunoRunner implements IBrunoRunner)
-// Reference: Proposal: Section 5 (Contracts - BrunoRunner)
-
 public class BrunoRunnerTests
 {
     private static readonly TimeSpan TimeoutForTesting = TimeSpan.FromMilliseconds(100);
