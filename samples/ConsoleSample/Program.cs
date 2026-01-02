@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Reflection;
 using Teqniqly.BRUnit.Testing;
 
 // This console sample demonstrates how to use Teqniqly.BRUnit.Testing
@@ -12,7 +13,50 @@ var runner = new BrunoRunner(new ProcessFactory());
 var hasFailure = false;
 
 // Example 1: Basic usage with a Bruno collection
-var collectionPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "bruno-collection");
+// Try multiple locations: output directory, project directory parent, and samples directory
+var currentDir = Directory.GetCurrentDirectory();
+var currentDirCollection = Path.Combine(currentDir, "bruno-collection");
+var parentDirCollection = Path.Combine(currentDir, "..", "bruno-collection");
+var samplesCollection = Path.Combine(currentDir, "..", "..", "..", "samples", "bruno-collection");
+
+string collectionPath;
+if (Directory.Exists(currentDirCollection))
+{
+    collectionPath = currentDirCollection;
+}
+else if (Directory.Exists(parentDirCollection))
+{
+    collectionPath = parentDirCollection;
+}
+else if (Directory.Exists(samplesCollection))
+{
+    collectionPath = samplesCollection;
+}
+else
+{
+    // Fallback: try to find it relative to the assembly location
+    var assemblyLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    if (assemblyLocation != null)
+    {
+        var assemblyCollection = Path.Combine(assemblyLocation, "bruno-collection");
+        if (Directory.Exists(assemblyCollection))
+        {
+            collectionPath = assemblyCollection;
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"Bruno collection not found. Searched in: {currentDirCollection}, {parentDirCollection}, {samplesCollection}, {assemblyCollection}"
+            );
+        }
+    }
+    else
+    {
+        throw new InvalidOperationException(
+            $"Bruno collection not found. Searched in: {currentDirCollection}, {parentDirCollection}, {samplesCollection}"
+        );
+    }
+}
 var basicOptions = new BrunoRunOptions
 {
     Target = "requests",

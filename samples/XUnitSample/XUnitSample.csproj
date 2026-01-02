@@ -33,4 +33,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <Target Name="CopyBrunoCollection" AfterTargets="Build">
+    <ItemGroup>
+      <BrunoCollectionFiles Include="..\bruno-collection\**\*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(BrunoCollectionFiles)"
+      DestinationFiles="@(BrunoCollectionFiles->'$(OutputPath)bruno-collection\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+    />
+  </Target>
 </Project>
