@@ -25,7 +25,7 @@ jobs:
 
       - name: Install Bruno CLI
         run: |
-          npm install -g @usebruno/cli@2
+          npm install -g @usebruno/cli@2.15
           echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
 
       - name: Verify Bruno CLI installation
