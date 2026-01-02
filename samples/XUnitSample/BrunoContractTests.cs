@@ -205,6 +205,9 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
             return null;
         }
 
+        // Navigate up 4 levels from assembly location to reach solution root
+        // Typical path: samples/XUnitSample/bin/Debug/net10.0/XUnitSample.dll
+        // After navigation: solution root → TestHelper/bin/...
         var currentDir = assemblyLocation;
         for (var i = 0; i < 4 && currentDir != null; i++)
         {
