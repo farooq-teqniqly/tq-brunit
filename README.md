@@ -21,13 +21,13 @@ A .NET library for executing [Bruno CLI](https://docs.usebruno.com/bru-cli) cont
 Install the package from NuGet:
 
 ```bash
-dotnet add package Teqniqly.BRUnit.Testing
+dotnet add package Teqniqly.BRUnit.Testing --prerelease
 ```
 
 Or via Package Manager:
 
 ```powershell
-Install-Package Teqniqly.BRUnit.Testing
+Install-Package Teqniqly.BRUnit.Testing --prerelease
 ```
 
 ### .NET Version Requirements
@@ -218,7 +218,3 @@ For detailed technical information, architecture decisions, and design rationale
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-```
-
-```

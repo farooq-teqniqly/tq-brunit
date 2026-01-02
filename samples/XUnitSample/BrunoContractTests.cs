@@ -144,7 +144,6 @@ public class BrunoContractTests : IClassFixture<BrunoCollectionFixture>
         stopwatch.Stop();
 
         // Assert
-        Assert.NotNull(exception);
         Assert.Contains("timeout", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(
             shortTimeout.TotalSeconds.ToString(
