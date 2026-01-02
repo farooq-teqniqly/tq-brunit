@@ -14,12 +14,16 @@ if (args.Length > 0 && args[0].Equals("run", StringComparison.OrdinalIgnoreCase)
 
 if (args.Length <= argIndex)
 {
-    await Console.Error.WriteLineAsync("Usage: TestHelper.exe [run] <sleep-seconds> [exit-code]");
+    await Console
+        .Error.WriteLineAsync("Usage: TestHelper.exe [run] <sleep-seconds> [exit-code]")
+        .ConfigureAwait(false);
     Environment.Exit(1);
 }
 if (!int.TryParse(args[argIndex], out sleepSeconds) || sleepSeconds < 0)
 {
-    await Console.Error.WriteLineAsync($"Invalid sleep duration: {args[argIndex]}");
+    await Console
+        .Error.WriteLineAsync($"Invalid sleep duration: {args[argIndex]}")
+        .ConfigureAwait(false);
     Environment.Exit(1);
     return;
 }
@@ -35,7 +39,7 @@ if (args.Length > exitCodeIndex && int.TryParse(args[exitCodeIndex], out var par
 Thread.Sleep(TimeSpan.FromSeconds(sleepSeconds));
 
 // Write some output to simulate Bruno behavior
-await Console.Out.WriteLineAsync("Test helper completed");
-await Console.Error.WriteLineAsync("Test helper stderr output");
+await Console.Out.WriteLineAsync("Test helper completed").ConfigureAwait(false);
+await Console.Error.WriteLineAsync("Test helper stderr output").ConfigureAwait(false);
 
 Environment.Exit(exitCode);

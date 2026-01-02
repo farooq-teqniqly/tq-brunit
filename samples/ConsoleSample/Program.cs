@@ -9,7 +9,7 @@ using Teqniqly.BRUnit.Testing;
 // 2. A Bruno collection file or folder must exist (see README.md in this folder)
 
 var runner = new BrunoRunner(new ProcessFactory());
-bool hasFailure = false;
+var hasFailure = false;
 
 // Example 1: Basic usage with a Bruno collection
 var collectionPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "bruno-collection");
