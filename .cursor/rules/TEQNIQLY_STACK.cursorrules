@@ -102,6 +102,14 @@
   - Example: See `MenuItem.Image`, `WineList.Image`, `ImageSize` value object
   - This prevents external code from mutating internal data through property access
 
+### Nullable types conventions
+- **Prefer exceptions over nullable return types**: Avoid nullable return types (`T?`) when possible
+  - Instead of returning `null`, throw an appropriate exception (`InvalidOperationException`, `ArgumentNullException`, etc.)
+  - Constructor parameters should be non-nullable and validated with `ArgumentNullException.ThrowIfNull()`
+  - Interface methods should return non-nullable types when the operation should always succeed
+  - Example: `IProcessFactory.Start()` returns `Process` (not `Process?`) and throws `InvalidOperationException` if the process cannot be started
+  - This makes the API contract clearer and forces explicit error handling
+
 ### Documentation expectations
 - Use these docs as the source of truth for agent work:
   - `docs/exploration/*`

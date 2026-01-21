@@ -193,6 +193,10 @@ Examples:
 - Maintain consistency with existing codebase patterns
 - Update all affected files as specified in the design document
 - Preserve backward compatibility when required (see migration paths)
+- **Prefer exceptions over nullable types**: Avoid nullable return types (`T?`) when possible
+  - Constructor parameters should be non-nullable and validated with `ArgumentNullException.ThrowIfNull()`
+  - Interface methods should return non-nullable types and throw exceptions instead of returning null
+  - This makes the API contract clearer and forces explicit error handling
 
 ### Database Changes
 - If database migration is required, follow the migration script from design document
