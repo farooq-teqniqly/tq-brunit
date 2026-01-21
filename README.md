@@ -1,6 +1,33 @@
 # Teqniqly.BRUnit.Testing
 
+[![NuGet](https://img.shields.io/nuget/v/Teqniqly.BRUnit.Testing)](https://www.nuget.org/packages/Teqniqly.BRUnit.Testing)
+[![Build and Test](https://github.com/farooq-teqniqly/tq-brunit/actions/workflows/deploy-nuget-tq-brunit-testing.yml/badge.svg)](https://github.com/farooq-teqniqly/tq-brunit/actions/workflows/deploy-nuget-tq-brunit-testing.yml)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![.NET 9](https://img.shields.io/badge/.NET-9.0-blue)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-blue)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=farooq-teqniqly_tq-brunit&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=farooq-teqniqly_tq-brunit)
+
 A .NET library for executing [Bruno CLI](https://docs.usebruno.com/bru-cli) contract tests programmatically from .NET code. This library enables running Bruno API contract tests alongside .NET integration tests in a unified test pipeline.
+
+## Table of Contents
+
+- [Overview](#overview)
+  - [Key Features](#key-features)
+- [Installation](#installation)
+  - [.NET Version Requirements](#net-version-requirements)
+- [Bruno CLI Requirements](#bruno-cli-requirements)
+  - [Installing Bruno CLI](#installing-bruno-cli)
+  - [PATH Requirements](#path-requirements)
+- [Quick Start](#quick-start)
+  - [Basic Usage](#basic-usage)
+  - [Using Environment Names](#using-environment-names)
+  - [Passing Environment Variables](#passing-environment-variables)
+  - [Custom Timeout](#custom-timeout)
+  - [Complete Example](#complete-example)
+- [Sample Projects](#sample-projects)
+- [API Reference](#api-reference)
+- [Documentation](#documentation)
+- [License](#license)
 
 ## Overview
 
