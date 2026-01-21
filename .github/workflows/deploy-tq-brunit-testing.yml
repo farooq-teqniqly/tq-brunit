@@ -140,7 +140,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-10.0.x
-          path: .
+          path: ${{env.PROJECT_NAME}}
 
       - name: Restore dependencies
         run: dotnet restore ${{env.PROJECT_NAME}}/${{env.PROJECT_NAME}}.csproj
